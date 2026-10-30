@@ -1,0 +1,12 @@
+{
+  "name": "@pulse/shared",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./styles.css": "./src/styles.css"
+  },
+  "peerDependencies": { "react": "^18.3.0", "next": "^14.2.0" }
+}

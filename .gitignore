@@ -1,0 +1,17 @@
+node_modules/
+.next/
+*.tsbuildinfo
+next-env.d.ts
+__pycache__/
+*.pyc
+.env
+.env.local
+backend/db.sqlite3
+backend/media/
+backend/staticfiles/
+.vercel/
+.DS_Store
+.venv/
+# Хуучин хуулбар, төлөвлөгөөний файлууд (repo-д оруулахгүй)
+/pulse-mn/
+*.xlsx

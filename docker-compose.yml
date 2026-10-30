@@ -1,0 +1,42 @@
+# Local хөгжүүлэлт: PostgreSQL + pgAdmin + Django backend
+# Ажиллуулах:  docker compose up --build
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: pulse
+      POSTGRES_USER: pulse
+      POSTGRES_PASSWORD: pulse
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pulse -d pulse"]
+      interval: 5s
+      retries: 10
+
+  pgadmin:
+    image: dpage/pgadmin4:8
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@pulse.mn
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    ports: ["5050:80"]
+    volumes:
+      - ./infra/pgadmin/servers.json:/pgadmin4/servers.json:ro
+    depends_on: [db]
+
+  backend:
+    build: ./backend
+    command: sh -c "python manage.py migrate && python manage.py seed && python manage.py seed_demo && python manage.py runserver 0.0.0.0:8000"
+    env_file: ./backend/.env.example
+    environment:
+      DATABASE_URL: postgres://pulse:pulse@db:5432/pulse
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    ports: ["8000:8000"]
+    volumes: ["./backend:/app"]
+    depends_on:
+      db: { condition: service_healthy }
+
+volumes:
+  pgdata:

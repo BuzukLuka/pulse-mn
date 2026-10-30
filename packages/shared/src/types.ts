@@ -1,0 +1,106 @@
+export type Role = "journalist" | "editor" | "newsroom" | "citizen" | "admin";
+export type ContentStatus =
+  | "draft" | "under_review" | "changes_requested" | "published" | "rejected" | "hidden";
+
+export interface User {
+  id: number; email: string; full_name: string; phone: string; organization: string;
+  bio: string; role: Role; is_active: boolean; created_at: string; last_login?: string | null;
+  is_verified?: boolean; province?: number | null; province_name?: string | null; district?: number | null;
+  show_email?: boolean; show_phone?: boolean; show_org?: boolean;
+  experiences?: Experience[]; portfolio?: PortfolioItem[];
+}
+export interface Experience { id?: number; organization: string; position: string; period: string }
+export interface PortfolioItem { id?: number; title: string; kind: string; year: number | null; url: string }
+export interface Paginated<T> { count: number; next: string | null; previous: string | null; results: T[] }
+export interface Option { id: number; name: string }
+export interface Category { id: number; slug: string; name: string }
+export interface District extends Option { province: number }
+export interface Media {
+  id: number; kind: "image" | "video" | "document"; original_name: string;
+  size: number; sha256: string; phash?: string; url: string;
+}
+export interface AiReview {
+  verdict: "ok" | "needs_attention" | "risky"; score: number; issues: string[];
+  summary: string; source: "gemini" | "rules";
+}
+export interface AiSuggestion {
+  category: string | null; category_id: number | null; tags: string[]; summary: string;
+  source: "gemini" | "rules";
+}
+export type CheckStatus = "ok" | "warn" | "fail" | "info";
+export interface TrustCheck {
+  key: string; label: string; status: CheckStatus; detail?: string; items?: any[]; score?: number; source?: string;
+}
+export interface Verification {
+  score: number; level: "high" | "medium" | "low"; stage: "precheck" | "full"; ai_used: boolean;
+  generated_at: string; checks: TrustCheck[]; editor_verified?: boolean;
+  related_pledges?: { id: number; text: string; politician: string; score: number }[];
+}
+export interface PublicTrust {
+  editor_verified: boolean; score: number | null; level: string | null; ai_used: boolean;
+  checks: { label: string; status: CheckStatus }[]; verified_at?: string | null;
+  claims: { indicator: string; unit: string; claimed: number; official: number; year: number; source: string; mismatch: boolean }[];
+}
+export interface ContentVersion { id: number; number: number; title: string; body: string; source: string; tags: string[]; created_at: string }
+export interface Content {
+  content_type?: string; event_time?: string | null; location_detail?: string; license?: string;
+  copyright_declared?: boolean; verification?: Verification | null; trust?: PublicTrust;
+  review_checklist?: Record<string, boolean> | null; pledges?: number[];
+  pledge_items?: { id: number; text: string; politician: string; politician_id: number }[];
+  versions?: ContentVersion[]; checklist_items?: { key: string; label: string; required: boolean }[];
+  id: number; title: string; body: string;
+  category: number | null; category_name: string | null; category_slug: string | null;
+  province: number | null; province_name: string | null;
+  district: number | null; district_name: string | null;
+  event_date: string | null; source: string; tags: string[]; ai_summary: string;
+  ai_suggestion?: AiSuggestion | null; ai_review?: AiReview | null;
+  status: ContentStatus; status_label: string; review_reason?: string;
+  reviewed_at?: string | null; submitted_at?: string | null; published_at: string | null;
+  created_at: string; updated_at: string; author?: number; author_name: string; media: Media[];
+  duplicates?: { id: number; title: string; reason: string; status: ContentStatus }[];
+}
+export interface AuditEntry {
+  id: number; actor_email: string | null; action: string; entity_type: string; entity_id: string;
+  before: unknown; after: unknown; reason: string; created_at: string;
+}
+export interface Notification {
+  id: number; title: string; body: string; content_id: number | null; is_read: boolean; created_at: string;
+}
+export interface Stats {
+  content_by_status: Record<string, number>; users_by_role: Record<string, number>;
+  users_total: number; content_total: number;
+}
+
+export type PledgeStatus = "fulfilled" | "in_progress" | "not_fulfilled" | "insufficient";
+export interface PledgeStats {
+  total: number; counts: Record<PledgeStatus, number>; base: number;
+  percent: Record<string, number | null>; method: string;
+}
+export interface Politician {
+  id: number; name: string; position: string; party: string; province: number | null; province_name: string | null;
+  district: number | null; term_year: number; stats: PledgeStats; pledges?: Pledge[];
+}
+export interface Evidence { id: number; kind: string; source: string; date: string; url: string; note: string }
+export interface Pledge {
+  id: number; politician: number; politician_name: string; text: string; category: number; category_name: string;
+  source: string; source_url: string; status: PledgeStatus; status_label: string; evidence_count: number;
+  evidence?: Evidence[];
+  history?: { id: number; old_status: PledgeStatus; new_status: PledgeStatus; reason: string; evidence: Evidence | null; changed_by_name?: string; created_at: string }[];
+}
+export interface Indicator {
+  id: number; name: string; aliases: string; unit: string; category: number; category_name: string;
+  source: number; source_name: string; frequency: string; is_active: boolean;
+  value?: number; year?: number; change_pct?: number | null; updated_at?: string;
+}
+export interface DataSource {
+  id: number; name: string; kind: string; url: string; frequency: string; last_synced_at: string | null;
+  status: string; last_error: string; indicator_count: number;
+}
+export interface IndicatorValue {
+  id: number; province: number | null; province_name: string | null; year: number; value: string;
+  history: { id: number; old_value: string | null; new_value: string; reason: string; changed_by_name?: string; created_at: string }[];
+}
+export interface Complaint {
+  id: number; target_type: string; target_id: number; kind: string; text: string; evidence_url: string;
+  status: "open" | "resolved" | "dismissed"; resolution: string; created_at: string; reporter_email?: string;
+}

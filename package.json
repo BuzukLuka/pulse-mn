@@ -1,0 +1,11 @@
+{
+  "name": "pulse-mn",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev:platform": "npm run dev -w @pulse/platform",
+    "dev:admin": "npm run dev -w @pulse/admin",
+    "build": "npm run build -w @pulse/platform && npm run build -w @pulse/admin",
+    "typecheck": "npm run typecheck -w @pulse/platform && npm run typecheck -w @pulse/admin"
+  }
+}
