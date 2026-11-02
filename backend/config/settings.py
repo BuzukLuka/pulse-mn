@@ -82,6 +82,12 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 WHITENOISE_USE_FINDERS = True  # collectstatic-гүйгээр (Vercel) ажиллана
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+# Vercel дээр файлын систем зөвхөн уншигддаг — токен байвал медиаг Vercel Blob-д хадгална
+STORAGES = {
+    "default": {"BACKEND": "apps.common.storage.VercelBlobStorage" if os.getenv("BLOB_READ_WRITE_TOKEN")
+                else "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+}
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 DATA_UPLOAD_MAX_MEMORY_SIZE = 60 * 1024 * 1024
 
