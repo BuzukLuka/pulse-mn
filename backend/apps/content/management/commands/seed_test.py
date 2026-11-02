@@ -130,7 +130,8 @@ class Command(BaseCommand):
 
     def handle(self, *a, **o):
         parts = set(filter(None, o["only"].split(","))) or {"news", "pledges", "stats", "complaints", "network"}
-        call_command("seed_demo", verbosity=0)
+        if parts & {"pledges", "stats"} or not Province.objects.exists():
+            call_command("seed_demo", verbosity=0)  # удаан тул шаардлагатай үед л
         self.rng = random.Random(o["seed"])
         self.provinces = list(Province.objects.prefetch_related("districts"))
         self.cats = {c.slug: c for c in Category.objects.all()}
@@ -176,8 +177,8 @@ class Command(BaseCommand):
         editors = [self.user(i, Role.EDITOR, "editor")[0] for i in range(1, 5)]
         citizens = [self.user(i, Role.CITIZEN, "citizen")[0] for i in range(1, 21)]
         for i in range(1, 4):
-            u, new = self.user(i, Role.NEWSROOM, "newsroom")
-            if new:
+            u, _ = self.user(i, Role.NEWSROOM, "newsroom")
+            if u.full_name != ORGS[i]:
                 u.full_name, u.organization, u.is_verified = ORGS[i], ORGS[i], True
                 u.bio = "Туршилтын (зохиомол) редакц."
                 u.save(update_fields=["full_name", "organization", "is_verified", "bio"])
@@ -292,31 +293,33 @@ class Command(BaseCommand):
                 resolved_at=timezone.now() if status != "open" else None)
 
     # ---------- Редакц ↔ сэтгүүлч, үнэлгээ, ДЕМО төлбөр ----------
+    # Хэсэг бүр өөрөө давхардлаа шалгадаг тул тасарвал дахин ажиллуулахад үргэлжилнэ.
     def network(self, journalists, citizens):
         newsrooms = list(User.objects.filter(role=Role.NEWSROOM, email__endswith="@test.pulse.mn").order_by("email"))
-        if not newsrooms or Membership.objects.filter(newsroom__in=newsrooms).exists():
+        if not newsrooms:
             return
         demo = User.objects.filter(email="journalist@pulse.mn").first()
         for k, j in enumerate(journalists + ([demo] if demo else [])):
             nr = newsrooms[(k // 2) % len(newsrooms)]  # баталгаажсан/үгүйг редакц бүрт холино
             status = "pending" if k % 5 == 4 else "active"
-            Membership.objects.create(newsroom=nr, journalist=j, status=status, message="Хамтран ажиллах хүсэлт (демо)",
-                                      decided_at=timezone.now() if status == "active" else None)
-            if status != "active":
+            m, made = Membership.objects.get_or_create(journalist=j, newsroom=nr, defaults={
+                "status": status, "message": "Хамтран ажиллах хүсэлт (демо)",
+                "decided_at": timezone.now() if status == "active" else None})
+            if not made or status != "active":
                 continue
-            mine = Content.objects.filter(author=j).exclude(status="draft")
-            Content.objects.filter(pk__in=list(mine.values_list("pk", flat=True)[::2])).update(newsroom=nr)
-            for c in mine.filter(status="published")[:2]:
-                Content.objects.filter(pk=c.pk).update(price=self.rng.choice([15000, 25000, 40000, 60000]))
-        for c in Content.objects.filter(price__gt=0, status="published").select_related("author")[:8]:
-            buyer = self.rng.choice(newsrooms)
-            Purchase.objects.create(content=c, buyer=buyer, amount=c.price, invoice_code=f"PMN-DEMO{c.pk:04d}",
-                                    status=self.rng.choice(["paid", "paid", "pending"]), paid_at=timezone.now())
-        comments = ["Баримттай, цаг алдалгүй сурвалжилдаг.", "Эх сурвалжаа тодорхой заадаг.",
-                    "Зарим мэдээ засвар шаардсан.", "Хамтран ажиллахад найдвартай.", "Сайн, гэхдээ илүү гүнзгий байж болно."]
+            mine = list(Content.objects.filter(author=j).exclude(status="draft").values_list("pk", "status"))
+            Content.objects.filter(pk__in=[pk for pk, _ in mine[::2]]).update(newsroom=nr)
+            Content.objects.filter(pk__in=[pk for pk, st in mine if st == "published"][:2]).update(
+                price=self.rng.choice([15000, 25000, 40000, 60000]))
+        if not Purchase.objects.filter(invoice_code__startswith="PMN-DEMO").exists():
+            Purchase.objects.bulk_create([
+                Purchase(content=c, buyer=self.rng.choice(newsrooms), amount=c.price, invoice_code=f"PMN-DEMO{c.pk:04d}",
+                         status=self.rng.choice(["paid", "paid", "pending"]), paid_at=timezone.now())
+                for c in Content.objects.filter(price__gt=0, status="published")[:8]])
         raters = citizens[:10] + newsrooms
-        for target in journalists + newsrooms:
-            for r in self.rng.sample(raters, 4):
-                if r.pk != target.pk:
-                    Rating.objects.update_or_create(rater=r, target=target, defaults={
-                        "score": self.rng.choice([3, 4, 4, 5, 5]), "comment": self.rng.choice(comments)})
+        if not Rating.objects.filter(rater__in=raters).exists():
+            comments = ["Баримттай, цаг алдалгүй сурвалжилдаг.", "Эх сурвалжаа тодорхой заадаг.",
+                        "Зарим мэдээ засвар шаардсан.", "Хамтран ажиллахад найдвартай.", "Сайн, гэхдээ илүү гүнзгий байж болно."]
+            Rating.objects.bulk_create([
+                Rating(rater=r, target=t, score=self.rng.choice([3, 4, 4, 5, 5]), comment=self.rng.choice(comments))
+                for t in journalists + newsrooms for r in self.rng.sample(raters, 4) if r.pk != t.pk], ignore_conflicts=True)
