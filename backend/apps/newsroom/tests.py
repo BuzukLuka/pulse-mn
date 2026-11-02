@@ -51,8 +51,8 @@ class NewsroomFlowTests(APITestCase):
     def test_membership_newsroom_notified_and_sees_content(self):
         User.objects.filter(pk=self.j.pk).update(is_verified=True)
         self.login("j@t.mn")
-        # гишүүн болохоос өмнө редакц сонгох боломжгүй
-        r = self.client.post("/api/v1/content/", {"title": "Туршилт", "newsroom": self.nr.pk}, format="json")
+        # редакц биш хэрэглэгчийг редакц болгон сонгох боломжгүй
+        r = self.client.post("/api/v1/content/", {"title": "Туршилт", "newsroom": self.ed.pk}, format="json")
         self.assertEqual(r.status_code, 400)
         mid = self.client.post("/api/v1/memberships/", {"newsroom": self.nr.pk, "message": "Сайн уу"}, format="json").data["id"]
         self.assertEqual(self.client.post("/api/v1/memberships/", {"newsroom": self.nr.pk}, format="json").status_code, 409)
@@ -71,6 +71,21 @@ class NewsroomFlowTests(APITestCase):
         # иргэн редакцын самбарт хандахгүй
         self.login("c@t.mn")
         self.assertEqual(self.client.get("/api/v1/newsroom/content/").status_code, 403)
+
+    def test_submit_to_newsroom_without_membership_and_send_later(self):
+        User.objects.filter(pk=self.j.pk).update(is_verified=True)
+        self.login("j@t.mn")
+        cid = self.draft(newsroom=self.nr.pk)  # гишүүнчлэлгүйгээр шууд редакц руу
+        self.client.post(f"/api/v1/content/{cid}/submit/")
+        self.assertTrue(Notification.objects.filter(user=self.nr, content_id=cid).exists())
+        # редакц сонгоогүй илгээсэн мэдээг дараа нь редакц руу явуулна
+        cid2 = self.draft(title="Дараа илгээх мэдээ")
+        self.client.post(f"/api/v1/content/{cid2}/submit/")
+        r = self.client.post(f"/api/v1/content/{cid2}/send-to-newsroom/", {"newsroom": self.nr.pk}, format="json")
+        self.assertEqual(r.status_code, 200, r.content)
+        self.assertEqual(self.client.post(f"/api/v1/content/{cid2}/send-to-newsroom/", {"newsroom": self.nr.pk}, format="json").status_code, 409)
+        self.login("n@t.mn")
+        self.assertEqual(sorted(c["id"] for c in self.client.get("/api/v1/newsroom/content/").data), sorted([cid, cid2]))
 
     def test_demo_purchase_and_ratings(self):
         c = Content.objects.create(author=self.j, title="Худалдах мэдээ", body=BODY, status="published", price=25000)

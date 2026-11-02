@@ -40,7 +40,7 @@ function NewsroomCard() {
   return (
     <div className="card">
       <h3>🏢 Миний редакц</h3>
-      <p className="muted" style={{ marginTop: 0 }}>Редакцад нэгдсэнээр мэдээгээ редакцаараа дамжуулж илгээх бөгөөд редакц шинэ мэдээ, редакторын шийдвэр бүрийн мэдэгдэл авна.</p>
+      <p className="muted" style={{ marginTop: 0 }}>Мэдээгээ ямар ч редакц руу илгээж болно. Редакцад нэгдвэл (редакц батална) профайлд «редакцын сэтгүүлч» гэж харагдаж, редакцын хуудсанд жагсаагдана.</p>
       {mine.filter((m) => m.status !== "left").map((m) => (
         <div key={m.id} className="row spread review">
           <div><a href={`/newsrooms/${m.newsroom.id}`}><b>{m.newsroom.name}</b></a> <span className={`badge ${MEMBERSHIP_TONE[m.status]}`}>{m.status_label}</span></div>

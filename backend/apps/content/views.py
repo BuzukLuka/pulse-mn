@@ -78,6 +78,11 @@ class MyContentViewSet(viewsets.ModelViewSet):
         Content.objects.filter(pk=obj.pk).update(verification=result)
         return Response(result)
 
+    @action(detail=True, methods=["post"], url_path="send-to-newsroom")
+    def send_to_newsroom(self, request, pk=None):
+        obj = services.send_to_newsroom(self.get_object(), request.user, request.data.get("newsroom"))
+        return Response(self.get_serializer(obj).data)
+
     @action(detail=True, methods=["get"])
     def history(self, request, pk=None):
         """Төлвийн түүх: хэзээ илгээсэн, хэн ямар шийдвэр гаргасан (аудит логоос)."""

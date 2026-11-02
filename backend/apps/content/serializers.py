@@ -49,13 +49,9 @@ class ContentSerializer(serializers.ModelSerializer):
         return (n.full_name or n.organization or n.email.split("@")[0]) if n else None
 
     def validate_newsroom(self, value):
-        """Зөвхөн идэвхтэй гишүүнчлэлтэй редакцаараа дамжуулж оруулна."""
-        if value is None:
-            return value
-        from apps.newsroom.services import active_newsroom_ids
-        request = self.context.get("request")
-        if not request or value.pk not in active_newsroom_ids(request.user):
-            raise serializers.ValidationError("Та энэ редакцын идэвхтэй сэтгүүлч биш байна.")
+        """Ямар ч идэвхтэй редакц руу илгээж болно (гишүүнчлэл шаардахгүй)."""
+        if value is not None and (value.role != "newsroom" or not value.is_active):
+            raise serializers.ValidationError("Сонгосон хэрэглэгч редакц биш байна.")
         return value
 
     def get_author_name(self, obj):

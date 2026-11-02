@@ -159,7 +159,27 @@ def decide(content, editor, decision, reason="", checklist=None):
     return content
 
 
+@transaction.atomic
+def send_to_newsroom(content, actor, newsroom):
+    """Илгээсэн / нийтлэгдсэн мэдээг дараа нь редакц руу явуулах (редакц сонгоогүй байсан бол)."""
+    from apps.accounts.models import Role, User
+    if content.status == Status.DRAFT:
+        raise Conflict("Ноорогт редакцаа маягт дээрээс сонгоно уу.")
+    if content.newsroom_id:
+        raise Conflict("Энэ мэдээ аль хэдийн редакцад илгээгдсэн.")
+    nr = User.objects.filter(pk=newsroom, role=Role.NEWSROOM, is_active=True).first() if newsroom else None
+    if not nr:
+        raise Unprocessable("Редакц олдсонгүй.")
+    content.newsroom = nr
+    content.save(update_fields=["newsroom", "updated_at"])
+    audit.log(actor, "content.send_newsroom", "content", content.pk, None, {"newsroom": nr.pk})
+    notify(nr, "Сэтгүүлч танай редакцад мэдээ илгээлээ",
+           f"{content.author.full_name or content.author.email}: {content.title} ({content.get_status_display()})", content.pk)
+    return content
+
+
 HISTORY_LABELS = {
+    "content.send_newsroom": "Редакцад илгээсэн",
     "content.submit": "Шалгалтад илгээсэн", "content.approve": "Нийтлэгдсэн", "content.return": "Засварт буцаасан",
     "content.reject": "Татгалзсан", "content.hide": "Түр нуусан", "content.restore": "Сэргээсэн",
 }
