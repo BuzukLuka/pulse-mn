@@ -4,6 +4,8 @@ from django.contrib import admin
 from django.http import JsonResponse
 from django.urls import include, path
 
+from apps.common import ops
+
 
 def health(_request):
     return JsonResponse({"status": "ok", "service": "pulse-mn-backend"})
@@ -12,6 +14,7 @@ def health(_request):
 urlpatterns = [
     path("", health),
     path("health/", health),
+    path("ops/run/", ops.run),
     path("django-admin/", admin.site.urls),
     path("api/v1/", include("apps.accounts.urls")),
     path("api/v1/", include("apps.catalog.urls")),

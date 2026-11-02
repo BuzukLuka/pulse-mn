@@ -15,3 +15,6 @@ backend/staticfiles/
 # Хуучин хуулбар, төлөвлөгөөний файлууд (repo-д оруулахгүй)
 /pulse-mn/
 *.xlsx
+
+.vercel
+.env*
