@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     "apps.pledges",
     "apps.statistics",
     "apps.complaints",
+    "apps.newsroom",
 ]
 
 MIDDLEWARE = [

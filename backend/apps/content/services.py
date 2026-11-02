@@ -45,6 +45,8 @@ def validate_for_submit(content):
 def submit(content, actor):
     if not content.can_transition(Status.UNDER_REVIEW):
         raise Conflict(f"'{content.get_status_display()}' төлөвтэй контентыг илгээх боломжгүй.")
+    if not content.author.is_verified:
+        raise Unprocessable("Зөвхөн баталгаажсан сэтгүүлч мэдээ илгээнэ. Профайлаас баталгаажуулалтын хүсэлт илгээнэ үү.")
     errors = validate_for_submit(content)
     if errors:
         raise ValidationError(errors)
@@ -64,6 +66,9 @@ def submit(content, actor):
     audit.log(actor, "content.submit", "content", content.pk, {"status": before},
               {"status": content.status})
     notify_editors("Шинэ контент шалгалтад ирлээ", content.title, content.pk)
+    if content.newsroom_id:
+        notify(content.newsroom, "Танай сэтгүүлч шинэ мэдээ илгээлээ",
+               f"{content.author.full_name or content.author.email}: {content.title}", content.pk)
     return content
 
 
@@ -149,7 +154,26 @@ def decide(content, editor, decision, reason="", checklist=None):
               {"status": new_status}, reason)
     notify(content.author, f"Таны контент: {content.get_status_display()}",
            reason or content.title, content.pk)
+    if content.newsroom_id:
+        notify(content.newsroom, f"Редакторын шийдвэр: {content.get_status_display()}", content.title, content.pk)
     return content
+
+
+HISTORY_LABELS = {
+    "content.submit": "Шалгалтад илгээсэн", "content.approve": "Нийтлэгдсэн", "content.return": "Засварт буцаасан",
+    "content.reject": "Татгалзсан", "content.hide": "Түр нуусан", "content.restore": "Сэргээсэн",
+}
+
+
+def status_history(content):
+    rows = audit.AuditLog.objects.filter(entity_type="content", entity_id=str(content.pk),
+                                         action__in=HISTORY_LABELS).select_related("actor").order_by("created_at")
+    out = [{"action": "created", "label": "Ноорог үүсгэсэн", "at": content.created_at, "actor": None, "reason": ""}]
+    for r in rows:
+        out.append({"action": r.action, "label": HISTORY_LABELS[r.action], "at": r.created_at, "reason": r.reason,
+                    "actor": (r.actor.full_name or r.actor.email) if r.actor else None,
+                    "to": (r.after or {}).get("status")})
+    return out
 
 
 @transaction.atomic

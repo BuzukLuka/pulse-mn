@@ -1,5 +1,5 @@
 "use client";
-import { Alert, api, fmtDate, fmtDateTime, RequireRole, StatusBadge, TrustCard, type Content } from "@pulse/shared";
+import { Alert, api, fmtDate, fmtDateTime, RequireRole, StatusBadge, Timeline, TrustCard, type Content, type HistoryItem } from "@pulse/shared";
 import { useParams, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import ContentForm from "@/components/ContentForm";
@@ -7,7 +7,11 @@ import ContentForm from "@/components/ContentForm";
 function Inner() {
   const { id } = useParams<{ id: string }>(); const sent = useSearchParams().get("sent");
   const [c, setC] = useState<Content | null>(null); const [err, setErr] = useState("");
-  useEffect(() => { api<Content>(`/content/${id}/`).then(setC).catch(() => setErr("Контент олдсонгүй.")); }, [id]);
+  const [hist, setHist] = useState<HistoryItem[]>([]);
+  useEffect(() => {
+    api<Content>(`/content/${id}/`).then(setC).catch(() => setErr("Контент олдсонгүй."));
+    api<HistoryItem[]>(`/content/${id}/history/`).then(setHist).catch(() => {});
+  }, [id]);
   if (err) return <Alert>{err}</Alert>;
   if (!c) return <p className="muted">Ачаалж байна…</p>;
   const editable = c.status === "draft" || c.status === "changes_requested";
@@ -20,6 +24,8 @@ function Inner() {
       {c.status === "rejected" && <Alert>Татгалзсан. Шалтгаан: <b>{c.review_reason}</b></Alert>}
       {c.status === "under_review" && <Alert tone="info">Шалгалтад байна. Илгээсэн: {fmtDateTime(c.submitted_at)}</Alert>}
       {c.status === "published" && <Alert tone="ok">Нийтлэгдсэн ({fmtDate(c.published_at)}). <a href={`/news/${c.id}`}>Харах</a></Alert>}
+      {c.newsroom_name && <p className="muted">🏢 Редакц: <b>{c.newsroom_name}</b> — шинэ төлөв бүрийн мэдэгдэл редакцад очно.</p>}
+      {hist.length > 0 && <div className="card"><h3>Төлвийн түүх</h3><Timeline items={hist} /></div>}
       {!editable && c.verification && <TrustCard v={c.verification} detailed />}
       {editable ? (
         <ContentForm initial={c} onDone={(x) => { window.location.href = `/journalist/${x.id}?sent=1`; }} />

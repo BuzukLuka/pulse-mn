@@ -23,6 +23,7 @@ class ContentSerializer(serializers.ModelSerializer):
     district_name = serializers.CharField(source="district.name", default=None, read_only=True)
     pledge_items = serializers.SerializerMethodField()
     status_label = serializers.CharField(source="get_status_display", read_only=True)
+    newsroom_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Content
@@ -33,7 +34,7 @@ class ContentSerializer(serializers.ModelSerializer):
             "review_reason", "reviewed_at", "submitted_at", "published_at", "created_at",
             "updated_at", "author", "author_name", "media", "content_type", "event_time",
             "location_detail", "license", "copyright_declared", "verification", "review_checklist",
-            "pledges", "pledge_items",
+            "pledges", "pledge_items", "newsroom", "newsroom_name", "price",
         ]
         read_only_fields = ["status", "review_reason", "reviewed_at", "submitted_at", "published_at",
                             "ai_summary", "ai_suggestion", "ai_review", "author", "verification",
@@ -42,6 +43,20 @@ class ContentSerializer(serializers.ModelSerializer):
     def get_pledge_items(self, obj):
         return [{"id": p.pk, "text": p.text[:140], "politician": p.politician.name, "politician_id": p.politician_id}
                 for p in obj.pledges.select_related("politician")]
+
+    def get_newsroom_name(self, obj):
+        n = obj.newsroom
+        return (n.full_name or n.organization or n.email.split("@")[0]) if n else None
+
+    def validate_newsroom(self, value):
+        """Зөвхөн идэвхтэй гишүүнчлэлтэй редакцаараа дамжуулж оруулна."""
+        if value is None:
+            return value
+        from apps.newsroom.services import active_newsroom_ids
+        request = self.context.get("request")
+        if not request or value.pk not in active_newsroom_ids(request.user):
+            raise serializers.ValidationError("Та энэ редакцын идэвхтэй сэтгүүлч биш байна.")
+        return value
 
     def get_author_name(self, obj):
         return obj.author.full_name or obj.author.email.split("@")[0]

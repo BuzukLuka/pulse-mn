@@ -25,4 +25,5 @@ urlpatterns = [
     path("api/v1/", include("apps.pledges.urls")),
     path("api/v1/", include("apps.statistics.urls")),
     path("api/v1/", include("apps.complaints.urls")),
+    path("api/v1/", include("apps.newsroom.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

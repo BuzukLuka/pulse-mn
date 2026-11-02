@@ -3,6 +3,7 @@ import { api, fmtDate, initials, TrustCard, type Content } from "@pulse/shared";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import ComplaintForm from "@/components/ComplaintForm";
+import PurchaseBox from "@/components/PurchaseBox";
 
 export default function NewsDetail() {
   const { id } = useParams<{ id: string }>();
@@ -25,7 +26,7 @@ export default function NewsDetail() {
           <span className="avatar">{initials(c.author_name)}</span>
           <div style={{ flex: 1, minWidth: 180 }}>
             <a href={`/journalists/${c.author}`} style={{ color: "var(--text)", fontWeight: 700 }}>{c.author_name}</a>
-            <div className="muted">Нийтэлсэн {fmtDate(c.published_at)} · Үйл явдал {fmtDate(c.event_date)}{c.event_time ? ` ${c.event_time.slice(0, 5)}` : ""}</div>
+            <div className="muted">{c.newsroom_name && <><a href={`/newsrooms/${c.newsroom}`}>🏢 {c.newsroom_name}</a> · </>}Нийтэлсэн {fmtDate(c.published_at)} · Үйл явдал {fmtDate(c.event_date)}{c.event_time ? ` ${c.event_time.slice(0, 5)}` : ""}</div>
           </div>
           <span className="muted">📍 {c.province_name}{c.district_name ? ` / ${c.district_name}` : ""}{c.location_detail ? ` · ${c.location_detail}` : ""}</span>
         </div>
@@ -45,6 +46,7 @@ export default function NewsDetail() {
       </div>
       <aside>
         {c.trust && <TrustCard pub={c.trust} />}
+        {!!c.price && <PurchaseBox contentId={c.id} price={c.price} authorName={c.author_name} />}
         {c.pledge_items && c.pledge_items.length > 0 && (
           <div className="card"><h3>🎯 Холбогдох амлалт</h3>
             {c.pledge_items.map((p) => <div key={p.id} style={{ marginTop: 10, fontSize: 14 }}><a href={`/pledges/${p.politician_id}`}><b>{p.politician}</b></a><div className="muted">{p.text}</div></div>)}</div>

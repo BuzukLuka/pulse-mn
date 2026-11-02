@@ -4,8 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 
 export default function Users() {
   const [q, setQ] = useState(""); const [role, setRole] = useState(""); const [data, setData] = useState<Paginated<User> | null>(null);
-  const [page, setPage] = useState(1); const [sel, setSel] = useState<User | null>(null);
-  const load = useCallback(() => api<Paginated<User>>(`/admin/users/${qs({ q, role, page })}`).then(setData).catch(() => {}), [q, role, page]);
+  const [page, setPage] = useState(1); const [sel, setSel] = useState<User | null>(null); const [ver, setVer] = useState("");
+  const load = useCallback(() => api<Paginated<User>>(`/admin/users/${qs({ q, role, page, verification: ver })}`).then(setData).catch(() => {}), [q, role, page, ver]);
   useEffect(() => { const t = setTimeout(load, 250); return () => clearTimeout(t); }, [load]);
   async function verify(u: User) {
     const reason = window.prompt(u.is_verified ? "Баталгаажуулалт цуцлах шалтгаан:" : "Баталгаажуулах үндэслэл (жишээ: үнэмлэх шалгасан):");
@@ -20,13 +20,14 @@ export default function Users() {
         <select value={role} onChange={(e) => { setRole(e.target.value); setPage(1); }}>
           <option value="">Бүх үүрэг</option>{Object.entries(ROLE_LABEL).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
         </select>
+        <button className={`pill ${ver ? "on" : ""}`} onClick={() => { setVer(ver ? "" : "requested"); setPage(1); }}>🛡 Баталгаажуулалт хүссэн</button>
       </div>
       <div className="table-wrap"><table>
         <thead><tr><th>Хэрэглэгч</th><th>Үүрэг</th><th>Төлөв</th><th>Сүүлд нэвтэрсэн</th><th /></tr></thead>
         <tbody>{data?.results.map((u) => (
-          <tr key={u.id}><td><b>{u.full_name || "—"}</b> {u.is_verified && <span className="badge green">Баталгаажсан</span>}<div className="muted">{u.email}</div></td><td>{ROLE_LABEL[u.role]}</td>
+          <tr key={u.id}><td><b>{u.full_name || "—"}</b> {u.is_verified && <span className="badge green">Баталгаажсан</span>}{!u.is_verified && u.verification_requested_at && <span className="badge amber">Хүсэлт · {fmtDateTime(u.verification_requested_at)}</span>}<div className="muted">{u.email}</div></td><td>{ROLE_LABEL[u.role]}</td>
             <td>{u.is_active ? <span className="badge green">Идэвхтэй</span> : <span className="badge red">Түр хаагдсан</span>}</td>
-            <td>{fmtDateTime(u.last_login)}</td><td><button className="btn secondary sm" onClick={() => setSel(u)}>Эрх өөрчлөх</button>{u.role === "journalist" && <> <button className="btn secondary sm" onClick={() => verify(u)}>{u.is_verified ? "Баталгаажуулалт цуцлах" : "Сэтгүүлч баталгаажуулах"}</button></>}</td></tr>
+            <td>{fmtDateTime(u.last_login)}</td><td><button className="btn secondary sm" onClick={() => setSel(u)}>Эрх өөрчлөх</button>{(u.role === "journalist" || u.role === "newsroom") && <> <button className={`btn sm ${!u.is_verified && u.verification_requested_at ? "" : "secondary"}`} onClick={() => verify(u)}>{u.is_verified ? "Баталгаажуулалт цуцлах" : "Баталгаажуулах"}</button></>}</td></tr>
         ))}</tbody>
       </table></div>
       {data && (data.next || data.previous) && <div className="row" style={{ marginTop: 12 }}>

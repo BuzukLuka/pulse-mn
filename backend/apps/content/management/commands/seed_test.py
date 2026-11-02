@@ -16,6 +16,7 @@ from apps.catalog.models import Category, District, Province
 from apps.complaints.models import Complaint
 from apps.content import services as cs
 from apps.content.models import Content, ContentType, License
+from apps.newsroom.models import Membership, Purchase, Rating
 from apps.pledges.models import Pledge, PledgeStatus, Politician
 from apps.pledges.services import update_status
 from apps.statistics import services as st
@@ -124,11 +125,11 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("--news", type=int, default=120, help="Үүсгэх мэдээний тоо")
         parser.add_argument("--seed", type=int, default=2026, help="Санамсаргүй тооны үр (давтагдах үр дүн)")
-        parser.add_argument("--only", default="", help="Таслалаар: news,pledges,stats,complaints (хоосон бол бүгд). "
+        parser.add_argument("--only", default="", help="Таслалаар: news,pledges,stats,complaints,network (хоосон бол бүгд). "
                                                        "Serverless-д хугацаа хэтрэхээс сэргийлж хэсэгчлэн ажиллуулна.")
 
     def handle(self, *a, **o):
-        parts = set(filter(None, o["only"].split(","))) or {"news", "pledges", "stats", "complaints"}
+        parts = set(filter(None, o["only"].split(","))) or {"news", "pledges", "stats", "complaints", "network"}
         call_command("seed_demo", verbosity=0)
         self.rng = random.Random(o["seed"])
         self.provinces = list(Province.objects.prefetch_related("districts"))
@@ -142,6 +143,8 @@ class Command(BaseCommand):
             self.stats()
         if "complaints" in parts:
             self.complaints(citizens)
+        if "network" in parts:
+            self.network(journalists, citizens)
         self.stdout.write(self.style.SUCCESS(
             f"seed_test дууслаа: {User.objects.count()} хэрэглэгч, {Content.objects.count()} контент (+{made}), "
             f"{pols} албан тушаалтан, {Complaint.objects.count()} гомдол. Нууц үг: {PASSWORD}"))
@@ -173,7 +176,12 @@ class Command(BaseCommand):
         editors = [self.user(i, Role.EDITOR, "editor")[0] for i in range(1, 5)]
         citizens = [self.user(i, Role.CITIZEN, "citizen")[0] for i in range(1, 21)]
         for i in range(1, 4):
-            self.user(i, Role.NEWSROOM, "newsroom")
+            u, new = self.user(i, Role.NEWSROOM, "newsroom")
+            if new:
+                u.full_name, u.organization, u.is_verified = ORGS[i], ORGS[i], True
+                u.bio = "Туршилтын (зохиомол) редакц."
+                u.save(update_fields=["full_name", "organization", "is_verified", "bio"])
+        User.objects.filter(email="journalist@pulse.mn").update(is_verified=True)
         return journalists, editors, citizens
 
     # ---------- Мэдээ (бүх төлөв) ----------
@@ -199,7 +207,7 @@ class Command(BaseCommand):
                 license=self.rng.choice(list(License.values)), copyright_declared=True,
                 location_detail=f"{dist.name if dist else prov.name} төв")
             roll = self.rng.random()
-            if roll < 0.06:                       # ноорог хэвээр
+            if roll < 0.06 or not author.is_verified:   # ноорог хэвээр (баталгаажаагүй бол илгээх боломжгүй)
                 pass
             else:
                 cs.submit(c, author)
@@ -282,3 +290,33 @@ class Command(BaseCommand):
                 text=text, status=status, resolution="Шалгаад зассан (демо)." if status == "resolved" else "",
                 resolved_by=self.admin if status != "open" else None,
                 resolved_at=timezone.now() if status != "open" else None)
+
+    # ---------- Редакц ↔ сэтгүүлч, үнэлгээ, ДЕМО төлбөр ----------
+    def network(self, journalists, citizens):
+        newsrooms = list(User.objects.filter(role=Role.NEWSROOM, email__endswith="@test.pulse.mn").order_by("email"))
+        if not newsrooms or Membership.objects.filter(newsroom__in=newsrooms).exists():
+            return
+        demo = User.objects.filter(email="journalist@pulse.mn").first()
+        for k, j in enumerate(journalists + ([demo] if demo else [])):
+            nr = newsrooms[(k // 2) % len(newsrooms)]  # баталгаажсан/үгүйг редакц бүрт холино
+            status = "pending" if k % 5 == 4 else "active"
+            Membership.objects.create(newsroom=nr, journalist=j, status=status, message="Хамтран ажиллах хүсэлт (демо)",
+                                      decided_at=timezone.now() if status == "active" else None)
+            if status != "active":
+                continue
+            mine = Content.objects.filter(author=j).exclude(status="draft")
+            Content.objects.filter(pk__in=list(mine.values_list("pk", flat=True)[::2])).update(newsroom=nr)
+            for c in mine.filter(status="published")[:2]:
+                Content.objects.filter(pk=c.pk).update(price=self.rng.choice([15000, 25000, 40000, 60000]))
+        for c in Content.objects.filter(price__gt=0, status="published").select_related("author")[:8]:
+            buyer = self.rng.choice(newsrooms)
+            Purchase.objects.create(content=c, buyer=buyer, amount=c.price, invoice_code=f"PMN-DEMO{c.pk:04d}",
+                                    status=self.rng.choice(["paid", "paid", "pending"]), paid_at=timezone.now())
+        comments = ["Баримттай, цаг алдалгүй сурвалжилдаг.", "Эх сурвалжаа тодорхой заадаг.",
+                    "Зарим мэдээ засвар шаардсан.", "Хамтран ажиллахад найдвартай.", "Сайн, гэхдээ илүү гүнзгий байж болно."]
+        raters = citizens[:10] + newsrooms
+        for target in journalists + newsrooms:
+            for r in self.rng.sample(raters, 4):
+                if r.pk != target.pk:
+                    Rating.objects.update_or_create(rater=r, target=target, defaults={
+                        "score": self.rng.choice([3, 4, 4, 5, 5]), "comment": self.rng.choice(comments)})

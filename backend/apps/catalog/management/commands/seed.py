@@ -43,6 +43,6 @@ class Command(BaseCommand):
             for email, name, role in DEMO_USERS:
                 if not User.objects.filter(email=email).exists():
                     User.objects.create_user(email, opts["password"], full_name=name, role=role,
-                                             is_staff=role == Role.ADMIN)
+                                             is_staff=role == Role.ADMIN, is_verified=role == Role.JOURNALIST)
             self.stdout.write(f"Demo хэрэглэгчид: {[u[0] for u in DEMO_USERS]} / {opts['password']}")
         self.stdout.write(self.style.SUCCESS("Seed дууслаа"))

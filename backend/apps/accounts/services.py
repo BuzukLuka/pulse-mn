@@ -47,5 +47,8 @@ def set_verified(actor, target, verified, reason=""):
         raise Unprocessable("Шалтгаан заавал бичнэ.")
     before = {"is_verified": target.is_verified}
     target.is_verified = verified
-    target.save(update_fields=["is_verified"])
+    target.verification_requested_at = None
+    target.save(update_fields=["is_verified", "verification_requested_at"])
     audit.log(actor, "user.verify", "user", target.pk, before, {"is_verified": verified}, reason)
+    from apps.notifications.services import notify
+    notify(target, "Таны бүртгэл баталгаажлаа" if verified else "Баталгаажуулалт цуцлагдлаа", reason)

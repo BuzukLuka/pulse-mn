@@ -79,6 +79,11 @@ class MyContentViewSet(viewsets.ModelViewSet):
         return Response(result)
 
     @action(detail=True, methods=["get"])
+    def history(self, request, pk=None):
+        """Төлвийн түүх: хэзээ илгээсэн, хэн ямар шийдвэр гаргасан (аудит логоос)."""
+        return Response(services.status_history(self.get_object()))
+
+    @action(detail=True, methods=["get"])
     def versions(self, request, pk=None):
         return Response(VersionSerializer(self.get_object().versions.all(), many=True).data)
 

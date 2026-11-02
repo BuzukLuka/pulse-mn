@@ -35,6 +35,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     district = models.ForeignKey("catalog.District", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.CITIZEN, db_index=True)
     is_verified = models.BooleanField(default=False)  # «Баталгаажсан» тэмдэг (админ олгоно)
+    verification_requested_at = models.DateTimeField(null=True, blank=True)  # хэрэглэгч хүсэлт илгээсэн
     show_email = models.BooleanField(default=False)   # профайлын нууцлалын тохиргоо
     show_phone = models.BooleanField(default=False)
     show_org = models.BooleanField(default=True)

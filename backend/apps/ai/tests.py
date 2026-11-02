@@ -18,7 +18,7 @@ class TrustTests(APITestCase):
     @classmethod
     def setUpTestData(cls):
         call_command("seed_demo", verbosity=0)
-        cls.j = User.objects.create_user("j@t.mn", PW, role=Role.JOURNALIST)
+        cls.j = User.objects.create_user("j@t.mn", PW, role=Role.JOURNALIST, is_verified=True)
         cls.e = User.objects.create_user("e@t.mn", PW, role=Role.EDITOR)
 
     def login(self, email):

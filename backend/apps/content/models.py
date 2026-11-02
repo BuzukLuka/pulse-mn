@@ -47,6 +47,10 @@ class Content(models.Model):
     review_checklist = models.JSONField(null=True, blank=True)
     pledges = models.ManyToManyField("pledges.Pledge", blank=True, related_name="news")
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="contents")
+    # Сэтгүүлч харьяалагддаг редакцаараа дамжуулж оруулбал редакц мэдэгдэл авч, самбартаа хянана
+    newsroom = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+                                 related_name="newsroom_contents")
+    price = models.PositiveIntegerField(default=0, help_text="Редакцад худалдах үнэ (₮). 0 бол зарахгүй.")
     title = models.CharField(max_length=250)
     body = models.TextField(blank=True)
     category = models.ForeignKey("catalog.Category", null=True, blank=True, on_delete=models.PROTECT)

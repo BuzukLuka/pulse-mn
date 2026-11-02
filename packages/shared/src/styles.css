@@ -261,3 +261,20 @@ a.card:hover .cover img{transform:scale(1.04)}
 .kpi-card .ico{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--brand-soft);color:var(--brand);margin-bottom:14px;font-size:18px}
 .kpi-card .muted{font-weight:600}
 .meter{height:8px;border-radius:999px;background:var(--gray-bg);overflow:hidden;margin-top:10px}.meter i{display:block;height:100%;background:var(--brand);border-radius:999px}
+
+/* ───────── Үнэлгээ, түүх ───────── */
+.stars{display:inline-flex;gap:1px;line-height:1}
+.stars i{font-style:normal;background:linear-gradient(90deg,var(--amber) var(--fill),var(--line-2) var(--fill));-webkit-background-clip:text;background-clip:text;color:transparent}
+.star-btn{background:none;border:0;font-size:28px;line-height:1;cursor:pointer;color:var(--line-2);padding:0 2px;transition:transform .1s}
+.star-btn.on{color:var(--amber)}.star-btn:hover{transform:scale(1.15)}
+.rating-head{display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:center}
+.rating-head .dist{display:grid;gap:4px}
+.review{padding:10px 0;border-top:1px solid var(--line)}
+.timeline{list-style:none;margin:0;padding:0 0 0 18px;border-left:2px solid var(--line)}
+.timeline li{position:relative;padding:0 0 16px 14px}
+.timeline li::before{content:"";position:absolute;left:-26px;top:5px;width:12px;height:12px;border-radius:50%;background:var(--gray);box-shadow:0 0 0 4px var(--card)}
+.timeline li.under_review::before{background:var(--blue)}.timeline li.published::before{background:var(--green)}
+.timeline li.changes_requested::before{background:var(--amber)}.timeline li.rejected::before{background:var(--red)}
+.banner{display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.invoice{border:1.5px dashed var(--line-2);border-radius:14px;padding:16px;margin:12px 0;background:var(--bg-2)}
+.invoice .code{font-family:var(--font-display);font-size:22px;letter-spacing:.06em}

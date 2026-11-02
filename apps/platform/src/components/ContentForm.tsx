@@ -1,7 +1,7 @@
 "use client";
 import {
   api, ApiError, Alert, Field, TrustCard, CONTENT_TYPES, LICENSES, type AiSuggestion, type Category, type Content,
-  type District, type Option, type Pledge, type Verification,
+  type District, type Membership, type Option, type Pledge, type Verification, useAuth,
 } from "@pulse/shared";
 import { useEffect, useState, type FormEvent } from "react";
 
@@ -14,7 +14,10 @@ export default function ContentForm({ initial, onDone }: { initial?: Content; on
     event_date: initial?.event_date ?? "", source: initial?.source ?? "",
     content_type: initial?.content_type ?? "news", event_time: initial?.event_time?.slice(0, 5) ?? "",
     location_detail: initial?.location_detail ?? "", license: initial?.license ?? "attribution",
+    newsroom: String(initial?.newsroom ?? ""), price: String(initial?.price ?? 0),
   });
+  const { user } = useAuth();
+  const [newsrooms, setNewsrooms] = useState<Membership[]>([]);
   const [copyright, setCopyright] = useState(!!initial?.copyright_declared);
   const [pledgeIds, setPledgeIds] = useState<number[]>(initial?.pledges ?? []);
   const [allPledges, setAllPledges] = useState<Pledge[]>([]);
@@ -31,6 +34,7 @@ export default function ContentForm({ initial, onDone }: { initial?: Content; on
     api<Option[]>("/catalog/provinces/", { auth: false }).then(setProvinces);
     api<Category[]>("/catalog/categories/", { auth: false }).then(setCategories);
     api<Pledge[]>("/pledges/", { auth: false }).then(setAllPledges).catch(() => {});
+    api<Membership[]>("/memberships/").then((m) => setNewsrooms(m.filter((x) => x.status === "active"))).catch(() => {});
   }, []);
   useEffect(() => {
     if (!f.province) { setDistricts([]); return; }
@@ -44,6 +48,7 @@ export default function ContentForm({ initial, onDone }: { initial?: Content; on
     district: f.district ? Number(f.district) : null,
     content_type: f.content_type, event_time: f.event_time || null, location_detail: f.location_detail,
     license: f.license, copyright_declared: copyright, pledges: pledgeIds,
+    newsroom: f.newsroom ? Number(f.newsroom) : null, price: Math.max(0, Number(f.price) || 0),
   });
 
   async function suggest() {
@@ -148,6 +153,23 @@ export default function ContentForm({ initial, onDone }: { initial?: Content; on
       </div>
 
       <div className="card">
+        <h3>Редакц, худалдаа</h3>
+        <div className="two">
+          <Field label="Редакцаар дамжуулах" error={errs.newsroom}>
+            <select value={f.newsroom} onChange={set("newsroom")}>
+              <option value="">— Бие даан (редакцгүй) —</option>
+              {newsrooms.map((m) => <option key={m.newsroom.id} value={m.newsroom.id}>{m.newsroom.name}</option>)}
+            </select>
+          </Field>
+          <Field label="Редакцад худалдах үнэ (₮, 0 = зарахгүй)" error={errs.price}>
+            <input type="number" min={0} step={1000} value={f.price} onChange={set("price")} />
+          </Field>
+        </div>
+        <small className="muted">{newsrooms.length ? "Редакц сонговол илгээх, шийдвэр гарах бүрт редакц мэдэгдэл авч самбартаа хянана."
+          : "Редакцад нэгдээгүй байна — «Миний контент» хуудаснаас нэгдэх хүсэлт илгээнэ үү."} Үнэ тавибал нийтлэгдсэний дараа редакцууд худалдан авч болно.</small>
+      </div>
+
+      <div className="card">
         <h3>Зохиогчийн эрх, лиценз</h3>
         <Field label="Хэрэглээний нөхцөл" error={errs.license}>
           <select value={f.license} onChange={set("license")}>{LICENSES.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select>
@@ -179,6 +201,8 @@ export default function ContentForm({ initial, onDone }: { initial?: Content; on
             <button type="button" className="btn sm" onClick={applyAi}>Батлах</button>
           </div>
         )}
+        <p className="muted" style={{ marginTop: 0 }}>Шошго нь мэдээг <b>хайлт, шүүлтүүрт</b> олдуулах, <b>давхардсан мэдээ</b> илрүүлэх,
+          холбогдох <b>статистик үзүүлэлт, амлалттай</b> автоматаар тулгахад ашиглагдана. AI зөвхөн санал болгоно — та батлах, засах эрхтэй.</p>
         <div>{tags.map((t) => <span className="tag" key={t}>#{t}<button type="button" onClick={() => setTags(tags.filter((x) => x !== t))}>×</button></span>)}</div>
         <div className="row">
           <input placeholder="Шошго нэмэх" value={newTag} onChange={(e) => setNewTag(e.target.value)}
@@ -193,8 +217,9 @@ export default function ContentForm({ initial, onDone }: { initial?: Content; on
         {trust && <TrustCard v={trust} detailed />}
       </div>
 
+      {user && !user.is_verified && <Alert tone="info">Баталгаажаагүй бүртгэлээр шалгалтад илгээх боломжгүй — ноорог хадгалаад, баталгаажуулалт хүснэ үү.</Alert>}
       <div className="row">
-        <button type="submit" className="btn" disabled={busy}>Шалгалтад илгээх</button>
+        <button type="submit" className="btn" disabled={busy || (!!user && !user.is_verified)}>Шалгалтад илгээх</button>
         <button type="button" className="btn secondary" disabled={busy} onClick={() => save(false)}>Ноорог хадгалах</button>
       </div>
     </form>

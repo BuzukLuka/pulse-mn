@@ -27,8 +27,8 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ["id", "email", "full_name", "phone", "organization", "bio", "province", "province_name",
                   "district", "show_email", "show_phone", "show_org", "role", "is_active", "is_verified",
-                  "created_at", "experiences", "portfolio"]
-        read_only_fields = ["id", "email", "role", "is_active", "is_verified", "created_at"]
+                  "verification_requested_at", "created_at", "experiences", "portfolio"]
+        read_only_fields = ["id", "email", "role", "is_active", "is_verified", "verification_requested_at", "created_at"]
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -64,6 +64,6 @@ class AdminUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["id", "email", "full_name", "phone", "organization", "role", "is_active",
-                  "is_verified", "created_at", "last_login"]
+                  "is_verified", "verification_requested_at", "created_at", "last_login"]
         read_only_fields = ["id", "email", "full_name", "phone", "organization", "is_verified",
-                            "created_at", "last_login"]
+                            "verification_requested_at", "created_at", "last_login"]

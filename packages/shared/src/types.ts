@@ -5,7 +5,7 @@ export type ContentStatus =
 export interface User {
   id: number; email: string; full_name: string; phone: string; organization: string;
   bio: string; role: Role; is_active: boolean; created_at: string; last_login?: string | null;
-  is_verified?: boolean; province?: number | null; province_name?: string | null; district?: number | null;
+  is_verified?: boolean; verification_requested_at?: string | null; province?: number | null; province_name?: string | null; district?: number | null;
   show_email?: boolean; show_phone?: boolean; show_org?: boolean;
   experiences?: Experience[]; portfolio?: PortfolioItem[];
 }
@@ -48,6 +48,7 @@ export interface Content {
   review_checklist?: Record<string, boolean> | null; pledges?: number[];
   pledge_items?: { id: number; text: string; politician: string; politician_id: number }[];
   versions?: ContentVersion[]; checklist_items?: { key: string; label: string; required: boolean }[];
+  newsroom?: number | null; newsroom_name?: string | null; price?: number;
   id: number; title: string; body: string;
   category: number | null; category_name: string | null; category_slug: string | null;
   province: number | null; province_name: string | null;
@@ -104,3 +105,20 @@ export interface Complaint {
   id: number; target_type: string; target_id: number; kind: string; text: string; evidence_url: string;
   status: "open" | "resolved" | "dismissed"; resolution: string; created_at: string; reporter_email?: string;
 }
+
+export interface RatingSummary { avg: number | null; count: number; distribution: Record<string, number> }
+export interface PersonCard {
+  id: number; name: string; is_verified: boolean; province: string | null; rating: RatingSummary;
+  email?: string; published?: number; organization?: string; bio?: string; members?: number;
+}
+export interface Membership {
+  id: number; status: "pending" | "active" | "rejected" | "left"; status_label: string; message: string;
+  created_at: string; decided_at: string | null; newsroom: { id: number; name: string }; journalist: PersonCard;
+}
+export interface Purchase {
+  id: number; status: "pending" | "paid" | "cancelled"; status_label: string; amount: number; invoice_code: string;
+  created_at: string; paid_at: string | null; content: { id: number; title: string; author_name: string };
+  buyer: { id: number; name: string };
+}
+export interface RatingSuggestion { score: number; reasons: string[]; source: "gemini" | "rules"; metrics: Record<string, unknown> }
+export interface HistoryItem { action: string; label: string; at: string; actor: string | null; reason: string; to?: string }

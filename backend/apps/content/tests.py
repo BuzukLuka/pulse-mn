@@ -18,7 +18,7 @@ class WorkflowTests(APITestCase):
     @classmethod
     def setUpTestData(cls):
         call_command("seed", "--no-users", verbosity=0)
-        cls.journalist = User.objects.create_user("j@t.mn", PW, role=Role.JOURNALIST, full_name="Ж")
+        cls.journalist = User.objects.create_user("j@t.mn", PW, role=Role.JOURNALIST, full_name="Ж", is_verified=True)
         cls.editor = User.objects.create_user("e@t.mn", PW, role=Role.EDITOR)
         cls.admin = User.objects.create_user("a@t.mn", PW, role=Role.ADMIN)
 
@@ -119,7 +119,7 @@ class AdminTests(APITestCase):
     def setUpTestData(cls):
         call_command("seed", "--no-users", verbosity=0)
         cls.admin = User.objects.create_user("a@t.mn", PW, role=Role.ADMIN)
-        cls.j = User.objects.create_user("j@t.mn", PW, role=Role.JOURNALIST)
+        cls.j = User.objects.create_user("j@t.mn", PW, role=Role.JOURNALIST, is_verified=True)
 
     def login(self, email):
         r = self.client.post("/api/v1/auth/login/", {"email": email, "password": PW}, format="json")

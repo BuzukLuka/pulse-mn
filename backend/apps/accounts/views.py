@@ -69,9 +69,11 @@ class JournalistListView(generics.ListAPIView):
     pagination_class = None
 
     def list(self, request, *args, **kwargs):
-        qs = User.objects.filter(role=Role.JOURNALIST, is_active=True).order_by("-is_verified", "full_name")[:100]
+        from apps.newsroom.services import rating_summary
+        qs = User.objects.filter(role=Role.JOURNALIST, is_active=True).select_related("province")             .order_by("-is_verified", "full_name")[:100]
         return Response([{"id": u.id, "full_name": u.full_name or u.email.split("@")[0],
-                          "is_verified": u.is_verified, "province": u.province.name if u.province else None}
+                          "is_verified": u.is_verified, "province": u.province.name if u.province else None,
+                          "rating": rating_summary(u)}
                          for u in qs])
 
 
@@ -91,6 +93,8 @@ class JournalistPublicView(APIView):
             "portfolio": PortfolioSerializer(u.portfolio.all(), many=True).data,
             "works": [{"id": c.id, "title": c.title, "published_at": c.published_at,
                        "province_name": c.province.name if c.province else None} for c in works],
+            "newsrooms": [{"id": m.newsroom_id, "name": m.newsroom.full_name or m.newsroom.organization}
+                          for m in u.memberships.filter(status="active").select_related("newsroom")],
         })
 
 
@@ -108,6 +112,8 @@ class AdminUserViewSet(viewsets.ReadOnlyModelViewSet):
             qs = qs.filter(role=p["role"])
         if p.get("is_active") in ("true", "false"):
             qs = qs.filter(is_active=p["is_active"] == "true")
+        if p.get("verification") == "requested":
+            qs = qs.filter(verification_requested_at__isnull=False, is_verified=False)
         return qs
 
     def partial_update(self, request, *args, **kwargs):

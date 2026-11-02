@@ -1,0 +1,106 @@
+"use client";
+import {
+  api, fmtDate, fmtMoney, MEMBERSHIP_TONE, PURCHASE_TONE, RatingBadge, RequireRole, STATUS_LABEL, StatusBadge, Tabs, useAuth,
+  type Content, type ContentStatus, type Membership, type Purchase, type RatingSummary,
+} from "@pulse/shared";
+import { useCallback, useEffect, useState } from "react";
+
+interface Summary { content: Record<string, number>; content_total: number; members: number; pending: number; purchases: number; rating: RatingSummary }
+
+function ContentTab() {
+  const [status, setStatus] = useState(""); const [items, setItems] = useState<Content[] | null>(null);
+  useEffect(() => { api<Content[]>(`/newsroom/content/${status ? `?status=${status}` : ""}`).then(setItems).catch(() => setItems([])); }, [status]);
+  return (
+    <>
+      <div className="pill-row" style={{ marginBottom: 12 }}>
+        <button className={`pill ${status === "" ? "on" : ""}`} onClick={() => setStatus("")}>Бүгд</button>
+        {(["under_review", "changes_requested", "published", "rejected"] as ContentStatus[]).map((k) =>
+          <button key={k} className={`pill ${status === k ? "on" : ""}`} onClick={() => setStatus(k)}>{STATUS_LABEL[k]}</button>)}
+      </div>
+      {items?.length === 0 && <p className="muted">Энэ төлөвт мэдээ алга. Сэтгүүлчид мэдээгээ илгээхдээ танай редакцыг сонгосноор энд харагдана.</p>}
+      {items?.map((c) => (
+        <div key={c.id} className="card row spread">
+          <div style={{ flex: 1, minWidth: 220 }}>
+            <b>{c.status === "published" ? <a href={`/news/${c.id}`}>{c.title}</a> : c.title}</b>
+            <div className="muted">✍️ {c.author_name} · {c.province_name} · илгээсэн {fmtDate(c.submitted_at)}</div>
+            {c.review_reason && <div className="muted">Редакторын тайлбар: {c.review_reason}</div>}
+          </div>
+          <div className="row">{c.verification?.score != null && <span className="badge blue">Trust {c.verification.score}</span>}<StatusBadge status={c.status} /></div>
+        </div>
+      ))}
+    </>
+  );
+}
+
+function MembersTab({ onChange }: { onChange: () => void }) {
+  const [items, setItems] = useState<Membership[]>([]);
+  const load = useCallback(() => api<Membership[]>("/newsroom/members/").then(setItems).catch(() => {}), []);
+  useEffect(() => { load(); }, [load]);
+  async function decide(id: number, approve: boolean) { await api(`/newsroom/members/${id}/decide/`, { method: "POST", body: { approve } }); load(); onChange(); }
+  async function remove(id: number) { if (window.confirm("Сэтгүүлчийг редакцаас хасах уу?")) { await api(`/memberships/${id}/end/`, { method: "POST" }); load(); onChange(); } }
+  const pending = items.filter((m) => m.status === "pending"); const active = items.filter((m) => m.status === "active");
+  return (
+    <>
+      <h3>Нэгдэх хүсэлт ({pending.length})</h3>
+      {pending.length === 0 && <p className="muted">Шинэ хүсэлт алга.</p>}
+      {pending.map((m) => (
+        <div key={m.id} className="card row spread">
+          <div><a href={`/journalists/${m.journalist.id}`}><b>{m.journalist.name}</b></a> {m.journalist.is_verified && <span className="badge green">Баталгаажсан</span>}
+            <div className="muted">{m.journalist.province ?? "—"} · {m.journalist.published} нийтлэл · {fmtDate(m.created_at)}</div>
+            {m.message && <div>“{m.message}”</div>}<RatingBadge r={m.journalist.rating} /></div>
+          <div className="row"><button className="btn ok sm" onClick={() => decide(m.id, true)}>Батлах</button><button className="btn secondary sm" onClick={() => decide(m.id, false)}>Татгалзах</button></div>
+        </div>
+      ))}
+      <h3 style={{ marginTop: 24 }}>Манай сэтгүүлчид ({active.length})</h3>
+      <div className="grid">{active.map((m) => (
+        <div key={m.id} className="card">
+          <div className="row spread"><a href={`/journalists/${m.journalist.id}`}><b>{m.journalist.name}</b></a><span className={`badge ${MEMBERSHIP_TONE[m.status]}`}>{m.status_label}</span></div>
+          <div className="muted">{m.journalist.province ?? "—"} · {m.journalist.published} нийтлэл</div>
+          <RatingBadge r={m.journalist.rating} />
+          <div style={{ marginTop: 8 }}><a className="btn secondary sm" href={`/journalists/${m.journalist.id}#rate`}>Үнэлэх</a> <button className="btn ghost sm" onClick={() => remove(m.id)}>Хасах</button></div>
+        </div>))}</div>
+    </>
+  );
+}
+
+function PurchasesTab() {
+  const [items, setItems] = useState<Purchase[]>([]);
+  useEffect(() => { api<Purchase[]>("/purchases/").then(setItems).catch(() => {}); }, []);
+  return (
+    <>
+      <p className="muted">Нийтлэгдсэн, үнэ тавьсан мэдээг мэдээний хуудаснаас «Худалдан авах» товчоор авна. Төлбөр одоогоор <b>ДЕМО</b> горимд — бодит мөнгө шилжихгүй.</p>
+      {items.length === 0 && <p className="muted">Худалдан авалт алга.</p>}
+      {items.map((p) => (
+        <div key={p.id} className="card row spread">
+          <div><a href={`/news/${p.content.id}`}><b>{p.content.title}</b></a><div className="muted">✍️ {p.content.author_name} · {p.invoice_code} · {fmtDate(p.created_at)}</div></div>
+          <span className={`badge ${PURCHASE_TONE[p.status]}`}>{p.status_label} · {fmtMoney(p.amount)}</span>
+        </div>))}
+    </>
+  );
+}
+
+export default function NewsroomDashboard() {
+  const { user } = useAuth();
+  const [tab, setTab] = useState("content"); const [s, setS] = useState<Summary | null>(null);
+  const loadSummary = useCallback(() => api<Summary>("/newsroom/summary/").then(setS).catch(() => {}), []);
+  useEffect(() => { if (user?.role === "newsroom") loadSummary(); }, [user, loadSummary]);
+  return (
+    <RequireRole roles={["newsroom"]}>
+      <div className="page-head"><div><div className="eyebrow">Редакцын самбар</div><h1>{user?.full_name || user?.organization || "Редакц"}</h1></div>
+        {user && <a className="btn secondary" href={`/newsrooms/${user.id}`}>Нийтийн хуудас</a>}</div>
+      {user && !user.is_verified && <div className="alert info">Редакцын бүртгэл баталгаажаагүй байна. Админ баталгаажуулснаар нийтийн хуудсанд ✓ тэмдэг гарна.</div>}
+      {s && (
+        <div className="grid" style={{ marginBottom: 20 }}>
+          <div className="card kpi-card"><div className="ico">📰</div><div className="muted">Ирсэн мэдээ</div><div className="stat">{s.content_total}</div><small className="muted">Нийтлэгдсэн {s.content.published ?? 0} · хянагдаж буй {s.content.under_review ?? 0}</small></div>
+          <div className="card kpi-card"><div className="ico">👥</div><div className="muted">Сэтгүүлч</div><div className="stat">{s.members}</div><small className="muted">{s.pending} хүсэлт хүлээгдэж буй</small></div>
+          <div className="card kpi-card"><div className="ico">⭐</div><div className="muted">Редакцын үнэлгээ</div><div className="stat">{s.rating.avg ?? "—"}</div><small className="muted">{s.rating.count} үнэлгээ</small></div>
+          <div className="card kpi-card"><div className="ico">💳</div><div className="muted">Худалдан авсан</div><div className="stat">{s.purchases}</div><small className="muted">ДЕМО төлбөр</small></div>
+        </div>
+      )}
+      <Tabs tabs={[["content", "Ирсэн мэдээ"], ["members", `Сэтгүүлчид${s?.pending ? ` (${s.pending})` : ""}`], ["purchases", "Худалдан авалт"]]} value={tab} onChange={setTab} />
+      {tab === "content" && <ContentTab />}
+      {tab === "members" && <MembersTab onChange={loadSummary} />}
+      {tab === "purchases" && <PurchasesTab />}
+    </RequireRole>
+  );
+}
