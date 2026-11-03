@@ -36,6 +36,16 @@ class User(AbstractBaseUser, PermissionsMixin):
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.CITIZEN, db_index=True)
     is_verified = models.BooleanField(default=False)  # «Баталгаажсан» тэмдэг (админ олгоно)
     verification_requested_at = models.DateTimeField(null=True, blank=True)  # хэрэглэгч хүсэлт илгээсэн
+    # Хууль эрх зүйн зөвшөөрөл (Хувийн мэдээлэл хамгаалах тухай хууль, үйлчилгээний нөхцөл, ёс зүйн дүрэм)
+    terms_accepted_at = models.DateTimeField(null=True, blank=True)
+    privacy_consent_at = models.DateTimeField(null=True, blank=True)
+    ethics_accepted_at = models.DateTimeField(null=True, blank=True)  # сэтгүүлч: ёс зүйн дүрэм
+    press_card_no = models.CharField(max_length=40, blank=True)       # сэтгүүлчийн үнэмлэхийн дугаар
+    # Редакц: хуулийн этгээдийн мэдээлэл (Хэвлэлийн эрх чөлөөний тухай хууль — хариуцлага хүлээх этгээд)
+    legal_name = models.CharField(max_length=200, blank=True)
+    registry_no = models.CharField(max_length=20, blank=True)         # хуулийн этгээдийн регистрийн дугаар
+    responsible_editor = models.CharField(max_length=120, blank=True) # хариуцлагатай эрхлэгч
+    anonymized_at = models.DateTimeField(null=True, blank=True)       # бүртгэл устгасан (мэдээлэл нууцалсан)
     show_email = models.BooleanField(default=False)   # профайлын нууцлалын тохиргоо
     show_phone = models.BooleanField(default=False)
     show_org = models.BooleanField(default=True)

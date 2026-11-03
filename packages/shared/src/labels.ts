@@ -32,11 +32,21 @@ export const LICENSES: [string, string][] = [
 ];
 export const COMPLAINT_KINDS: [string, string][] = [
   ["wrong", "Буруу мэдээлэл"], ["duplicate", "Хуулбар"], ["copyright", "Зохиогчийн эрх"],
-  ["privacy", "Хувийн мэдээлэл"], ["other", "Бусад"],
+  ["privacy", "Хувийн мэдээлэл"], ["defamation", "Гүтгэлэг, нэр төр"], ["minor", "Хүүхдийн эрх"],
+  ["reply", "Хариу тайлбар өгөх хүсэлт"], ["other", "Бусад"],
+];
+export const LEGAL_BASES: [string, string][] = [
+  ["court_order", "Шүүхийн шийдвэр"], ["privacy", "Хувийн мэдээлэл хамгаалах"], ["copyright", "Зохиогчийн эрх"],
+  ["defamation", "Гүтгэлэг, нэр төр"], ["minor", "Хүүхдийн эрх"], ["election", "Сонгуулийн хууль"],
+  ["ethics", "Ёс зүйн зөрчил"], ["other", "Бусад"],
+];
+export const PERSONAL_DATA: [string, string][] = [
+  ["none", "Хувь хүний мэдээлэл агуулаагүй"], ["consent", "Холбогдох хүний зөвшөөрөлтэй"],
+  ["public_interest", "Олон нийтийн ашиг сонирхолд (албан тушаалтан, нийтийн үйл ажиллагаа)"],
 ];
 export const COMPLAINT_STATUS: Record<string, string> = { open: "Нээлттэй", resolved: "Шийдвэрлэсэн", dismissed: "Хүлээн аваагүй" };
 export const fmtNum = (n: number | string | null | undefined) =>
   n === null || n === undefined ? "—" : new Intl.NumberFormat("mn-MN", { maximumFractionDigits: 2 }).format(Number(n));
 export const MEMBERSHIP_TONE: Record<string, string> = { pending: "amber", active: "green", rejected: "red", left: "gray" };
-export const PURCHASE_TONE: Record<string, string> = { pending: "amber", paid: "green", cancelled: "gray" };
+export const PURCHASE_TONE: Record<string, string> = { pending: "amber", paid: "green", cancelled: "gray", refunded: "red" };
 export const fmtMoney = (n: number) => `${new Intl.NumberFormat("mn-MN").format(n)}₮`;

@@ -31,7 +31,8 @@ class WorkflowTests(APITestCase):
         d = {"title": "Бэлчээрийн даац тооцоолол", "body": BODY,
              "category": Category.objects.get(slug="agriculture").pk,
              "province": Province.objects.get(name="Дорноговь").pk,
-             "event_date": date.today().isoformat(), "source": "Аймгийн ХАА газар", "copyright_declared": True}
+             "event_date": date.today().isoformat(), "source": "Аймгийн ХАА газар", "copyright_declared": True,
+             "compliance": {"facts_verified": True, "no_defamation": True, "personal_data": "none"}}
         d.update(kw)
         return d
 
@@ -159,5 +160,6 @@ class AdminTests(APITestCase):
     def test_register_cannot_pick_admin_role(self):
         r = self.client.post("/api/v1/auth/register/", {"email": "n@t.mn", "password": PW, "role": "admin"}, format="json")
         self.assertEqual(r.status_code, 400)
-        r = self.client.post("/api/v1/auth/register/", {"email": "n@t.mn", "password": PW, "role": "journalist"}, format="json")
+        r = self.client.post("/api/v1/auth/register/", {"email": "n@t.mn", "password": PW, "role": "journalist",
+                                                         "accept_terms": True, "accept_privacy": True, "accept_ethics": True}, format="json")
         self.assertEqual(r.status_code, 201)

@@ -22,6 +22,10 @@ def membership_json(m):
 def purchase_json(p):
     return {"id": p.id, "status": p.status, "status_label": p.get_status_display(), "amount": p.amount,
             "invoice_code": p.invoice_code, "created_at": p.created_at, "paid_at": p.paid_at,
+            "license_type": p.license_type, "license_label": p.get_license_type_display(),
+            "vat_amount": p.vat_amount, "platform_fee": p.platform_fee, "author_net": p.author_net,
+            "provider": p.provider, "provider_ref": p.provider_ref, "ebarimt_no": p.ebarimt_no,
+            "refund_reason": p.refund_reason, "demo": p.provider == "demo",
             "content": {"id": p.content_id, "title": p.content.title, "author_name": services.display_name(p.content.author)},
             "buyer": {"id": p.buyer_id, "name": services.display_name(p.buyer)}}
 
@@ -126,7 +130,21 @@ class PurchaseViewSet(viewsets.ViewSet):
 
     def create(self, request):
         c = generics.get_object_or_404(Content, pk=request.data.get("content"))
-        return Response(purchase_json(services.create_purchase(request.user, c)), status=201)
+        p = services.create_purchase(request.user, c, str(request.data.get("license_type", "standard")),
+                                     bool(request.data.get("accept_terms")))
+        return Response(purchase_json(p), status=201)
+
+    @action(detail=False, methods=["get"])
+    def quote(self, request):
+        """Худалдан авахаас өмнө үнийн задаргаа (НӨАТ, шимтгэл, сэтгүүлчид очих дүн)."""
+        from .payments import LICENSES, PLATFORM_FEE_PCT, breakdown, get_provider
+        c = generics.get_object_or_404(Content, pk=request.query_params.get("content"), status=Status.PUBLISHED)
+        exclusive_sold = Purchase.objects.filter(content=c, license_type="exclusive", status="paid").exists()
+        any_sold = Purchase.objects.filter(content=c, status="paid").exists()
+        return Response({"provider": get_provider().name, "live": get_provider().live, "fee_pct": PLATFORM_FEE_PCT,
+                         "options": [{"license_type": k, "label": label, **breakdown(c.price * mult),
+                                      "available": not exclusive_sold and (k != "exclusive" or not any_sold)}
+                                     for k, (label, mult) in LICENSES.items()]})
 
     @action(detail=True, methods=["post"])
     def confirm(self, request, pk=None):
@@ -137,6 +155,25 @@ class PurchaseViewSet(viewsets.ViewSet):
     def cancel(self, request, pk=None):
         p = generics.get_object_or_404(Purchase, pk=pk)
         return Response(purchase_json(services.cancel_purchase(request.user, p)))
+
+
+class AdminPurchaseViewSet(viewsets.ViewSet):
+    """Админ: бүх төлбөрийн хяналт, буцаалт."""
+    permission_classes = [roles("admin")]
+
+    def list(self, request):
+        from django.db.models import Sum
+        qs = Purchase.objects.select_related("content", "content__author", "buyer")
+        if request.query_params.get("status"):
+            qs = qs.filter(status=request.query_params["status"])
+        paid = Purchase.objects.filter(status="paid").aggregate(
+            gross=Sum("amount"), vat=Sum("vat_amount"), fee=Sum("platform_fee"), net=Sum("author_net"))
+        return Response({"totals": {k: v or 0 for k, v in paid.items()}, "items": [purchase_json(p) for p in qs[:200]]})
+
+    @action(detail=True, methods=["post"])
+    def refund(self, request, pk=None):
+        p = generics.get_object_or_404(Purchase, pk=pk)
+        return Response(purchase_json(services.refund_purchase(request.user, p, str(request.data.get("reason", "")))))
 
 
 # ---------- Үнэлгээ ----------

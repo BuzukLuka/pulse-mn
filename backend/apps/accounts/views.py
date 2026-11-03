@@ -10,7 +10,7 @@ from apps.content.models import Content
 from .models import Experience, PortfolioItem, Role, User
 from .serializers import (AdminUserSerializer, ExperienceSerializer, LoginSerializer, PortfolioSerializer,
                           RegisterSerializer, UserSerializer)
-from .services import set_verified, update_access
+from .services import delete_account, export_personal_data, set_verified, update_access
 
 
 class RegisterView(generics.CreateAPIView):
@@ -37,6 +37,19 @@ class MeView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         return self.request.user
+
+
+class MeExportView(APIView):
+    """Өөрийн мэдээллийг JSON-оор татах (мэдээлэл авах эрх)."""
+    def get(self, request):
+        return Response(export_personal_data(request.user))
+
+
+class MeDeleteView(APIView):
+    """Бүртгэлээ устгах (мэдээллээ устгуулах эрх) — нууц үгээр баталгаажуулна."""
+    def post(self, request):
+        delete_account(request.user, str(request.data.get("password", "")), str(request.data.get("reason", "")))
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class ReplaceListView(APIView):

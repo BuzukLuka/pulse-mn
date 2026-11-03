@@ -1,6 +1,6 @@
 "use client";
 import {
-  Alert, api, ApiError, fmtDate, RequireRole, StatusBadge, Tabs, TrustCard, type Content, type Verification,
+  Alert, api, ApiError, fmtDate, RequireRole, StatusBadge, Tabs, TrustCard, type Content, type Correction, type Verification,
 } from "@pulse/shared";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -124,6 +124,30 @@ export default function Review() {
           <button className="btn" onClick={submit} disabled={busy}>Шийдвэр баталгаажуулах</button>
         </div>
       ) : c.review_reason && <div className="card"><b>Шийдвэрийн шалтгаан:</b> {c.review_reason}</div>}
+      {c.status === "published" && <CorrectionForm id={c.id} items={c.corrections ?? []} onDone={load} />}
     </RequireRole>
+  );
+}
+
+/** Нийтлэгдсэн мэдээнд залруулга / хариу тайлбар / шинэчлэл нэмэх (нийтэд ил харагдана). */
+function CorrectionForm({ id, items, onDone }: { id: number; items: Correction[]; onDone: () => void }) {
+  const [kind, setKind] = useState("correction"); const [text, setText] = useState(""); const [err, setErr] = useState("");
+  async function send() {
+    setErr("");
+    try { await api(`/review/${id}/corrections/`, { method: "POST", body: { kind, text } }); setText(""); onDone(); }
+    catch (x) { setErr(x instanceof ApiError ? x.message : "Нийтэлж чадсангүй."); }
+  }
+  return (
+    <div className="card">
+      <h3>✏️ Залруулга, хариу тайлбар</h3>
+      <p className="muted" style={{ marginTop: 0 }}>Алдаа илэрсэн, эсвэл шүүмжлэгдсэн этгээд хариу тайлбар өгөх эрхээ эдэлсэн үед мэдээн дээр ил нийтэлнэ. Сэтгүүлчид мэдэгдэл очно.</p>
+      {items.map((x) => <div key={x.id} className="muted">• {x.kind_label} ({fmtDate(x.created_at)}): {x.text}</div>)}
+      <div className="row" style={{ marginTop: 10 }}>
+        <select value={kind} onChange={(e) => setKind(e.target.value)}><option value="correction">Залруулга</option><option value="reply">Хариу тайлбар</option><option value="update">Шинэчлэл</option></select>
+        <input style={{ flex: 1, minWidth: 200 }} placeholder="Юуг залруулсан, хэн ямар тайлбар өгсөн…" value={text} onChange={(e) => setText(e.target.value)} />
+        <button className="btn sm" disabled={text.trim().length < 10} onClick={send}>Нийтлэх</button>
+      </div>
+      {err && <Alert>{err}</Alert>}
+    </div>
   );
 }

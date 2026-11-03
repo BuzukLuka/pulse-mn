@@ -30,6 +30,9 @@ export default function NewsDetail() {
           </div>
           <span className="muted">📍 {c.province_name}{c.district_name ? ` / ${c.district_name}` : ""}{c.location_detail ? ` · ${c.location_detail}` : ""}</span>
         </div>
+        {(c.disclosure?.sponsored || c.disclosure?.political_ad) && (
+          <div className="disclosure">📢 <span>{c.disclosure.political_ad ? "Улс төрийн сурталчилгаа" : "Ивээн тэтгэсэн материал"} · Захиалагч: {c.disclosure.sponsor_name}</span></div>
+        )}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         {heroImg && <img className="hero-img" src={heroImg.url} alt={heroImg.original_name} />}
         {c.ai_summary && <div className="card ai"><div className="eyebrow" style={{ color: "var(--violet)" }}>✨ Товч агуулга · AI</div><div>{c.ai_summary}</div></div>}
@@ -41,6 +44,11 @@ export default function NewsDetail() {
           </div>
         )}
         {c.media.filter((m) => m.kind === "video").map((m) => <video key={m.id} src={m.url} controls style={{ width: "100%", borderRadius: 16, marginTop: 20 }} />)}
+        {c.corrections?.map((x) => (
+          <div key={x.id} className={`card ${x.kind === "reply" ? "correction reply" : "correction"}`} style={{ marginTop: 20 }}>
+            <b>{x.kind === "reply" ? "💬" : "✏️"} {x.kind_label}</b> <small className="muted">· {fmtDate(x.created_at)}</small><div>{x.text}</div></div>
+        ))}
+        {c.disclosure?.conflict_of_interest && <p className="muted" style={{ marginTop: 20 }}><b>Ашиг сонирхлын мэдэгдэл:</b> {c.disclosure.conflict_of_interest}</p>}
         <p className="muted" style={{ marginTop: 28 }}><b>Эх сурвалж:</b> {c.source}</p>
         <div>{c.tags.map((t) => <span className="tag" key={t}>#{t}</span>)}</div>
       </div>

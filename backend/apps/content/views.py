@@ -158,7 +158,8 @@ class AdminContentViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=True, methods=["post"])
     def hide(self, request, pk=None):
-        c = services.set_visibility(self.get_object(), request.user, True, str(request.data.get("reason", "")))
+        c = services.set_visibility(self.get_object(), request.user, True, str(request.data.get("reason", "")),
+                                    str(request.data.get("legal_basis", "other")))
         return Response(self.get_serializer(c).data)
 
     @action(detail=True, methods=["post"])

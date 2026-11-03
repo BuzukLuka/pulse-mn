@@ -72,5 +72,12 @@ class AdminComplaintViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, vi
         c.status, c.resolution, c.resolved_by, c.resolved_at = st, res, request.user, timezone.now()
         c.save()
         audit.log(request.user, "complaint.resolve", "complaint", c.pk, before, {"status": st}, res)
+        # Мэдээний гомдлыг үндэслэлтэй гэж үзвэл залруулга / хариу тайлбарыг мэдээн дээр нийтэлнэ
+        correction = str(request.data.get("correction", "")).strip()
+        if st == "resolved" and correction and c.target_type == "content":
+            from apps.content.models import Content
+            from apps.content.services import add_correction
+            add_correction(Content.objects.get(pk=c.target_id), request.user,
+                           "reply" if c.kind == "reply" else "correction", correction)
         notify(c.reporter, "Таны гомдол шийдвэрлэгдлээ", res)
         return Response(self.get_serializer(c).data)

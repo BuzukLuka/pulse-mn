@@ -25,7 +25,9 @@ export default function Users() {
       <div className="table-wrap"><table>
         <thead><tr><th>Хэрэглэгч</th><th>Үүрэг</th><th>Төлөв</th><th>Сүүлд нэвтэрсэн</th><th /></tr></thead>
         <tbody>{data?.results.map((u) => (
-          <tr key={u.id}><td><b>{u.full_name || "—"}</b> {u.is_verified && <span className="badge green">Баталгаажсан</span>}{!u.is_verified && u.verification_requested_at && <span className="badge amber">Хүсэлт · {fmtDateTime(u.verification_requested_at)}</span>}<div className="muted">{u.email}</div></td><td>{ROLE_LABEL[u.role]}</td>
+          <tr key={u.id}><td><b>{u.full_name || "—"}</b> {u.is_verified && <span className="badge green">Баталгаажсан</span>}{!u.is_verified && u.verification_requested_at && <span className="badge amber">Хүсэлт · {fmtDateTime(u.verification_requested_at)}</span>}<div className="muted">{u.email}</div>
+            {u.role === "journalist" && <small className="muted">Үнэмлэх: {u.press_card_no || "—"} · {u.organization || "байгууллагагүй"}</small>}
+            {u.role === "newsroom" && <small className="muted">{u.legal_name || "Хуулийн этгээд —"} · РД {u.registry_no || "—"} · Эрхлэгч {u.responsible_editor || "—"}</small>}</td><td>{ROLE_LABEL[u.role]}</td>
             <td>{u.is_active ? <span className="badge green">Идэвхтэй</span> : <span className="badge red">Түр хаагдсан</span>}</td>
             <td>{fmtDateTime(u.last_login)}</td><td><button className="btn secondary sm" onClick={() => setSel(u)}>Эрх өөрчлөх</button>{(u.role === "journalist" || u.role === "newsroom") && <> <button className={`btn sm ${!u.is_verified && u.verification_requested_at ? "" : "secondary"}`} onClick={() => verify(u)}>{u.is_verified ? "Баталгаажуулалт цуцлах" : "Баталгаажуулах"}</button></>}</td></tr>
         ))}</tbody>

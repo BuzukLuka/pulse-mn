@@ -1,5 +1,13 @@
 from rest_framework import serializers
-from .models import Content, ContentVersion, Media
+from .models import Content, ContentVersion, Correction, Media
+
+
+class CorrectionSerializer(serializers.ModelSerializer):
+    kind_label = serializers.CharField(source="get_kind_display", read_only=True)
+
+    class Meta:
+        model = Correction
+        fields = ["id", "kind", "kind_label", "text", "created_at"]
 
 
 class MediaSerializer(serializers.ModelSerializer):
@@ -23,6 +31,7 @@ class ContentSerializer(serializers.ModelSerializer):
     district_name = serializers.CharField(source="district.name", default=None, read_only=True)
     pledge_items = serializers.SerializerMethodField()
     status_label = serializers.CharField(source="get_status_display", read_only=True)
+    corrections = CorrectionSerializer(many=True, read_only=True)
     newsroom_name = serializers.SerializerMethodField()
 
     class Meta:
@@ -34,7 +43,7 @@ class ContentSerializer(serializers.ModelSerializer):
             "review_reason", "reviewed_at", "submitted_at", "published_at", "created_at",
             "updated_at", "author", "author_name", "media", "content_type", "event_time",
             "location_detail", "license", "copyright_declared", "verification", "review_checklist",
-            "pledges", "pledge_items", "newsroom", "newsroom_name", "price",
+            "pledges", "pledge_items", "newsroom", "newsroom_name", "price", "compliance", "corrections",
         ]
         read_only_fields = ["status", "review_reason", "reviewed_at", "submitted_at", "published_at",
                             "ai_summary", "ai_suggestion", "ai_review", "author", "verification",
@@ -62,6 +71,13 @@ class ContentSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Гарчиг заавал.")
         return value
 
+    def validate_compliance(self, value):
+        if not isinstance(value, dict):
+            raise serializers.ValidationError("Объект байх ёстой.")
+        allowed = {"facts_verified", "no_defamation", "personal_data", "minors_involved", "minors_protected",
+                   "conflict_of_interest", "sponsored", "sponsor_name", "political_ad"}
+        return {k: (str(v)[:200] if isinstance(v, str) else bool(v)) for k, v in value.items() if k in allowed}
+
     def validate_tags(self, value):
         if not isinstance(value, list) or any(not isinstance(t, str) for t in value):
             raise serializers.ValidationError("Шошго нь текстийн жагсаалт байх ёстой.")
@@ -79,10 +95,19 @@ class PublicContentSerializer(ContentSerializer):
     class Meta(ContentSerializer.Meta):
         fields = [f for f in ContentSerializer.Meta.fields
                   if f not in ("ai_suggestion", "ai_review", "review_reason", "author", "submitted_at",
-                               "verification", "review_checklist", "copyright_declared", "embedding")]
-        fields += ["trust"]
+                               "verification", "review_checklist", "copyright_declared", "embedding", "compliance")]
+        fields += ["trust", "disclosure"]
 
     trust = serializers.SerializerMethodField()
+    disclosure = serializers.SerializerMethodField()
+
+    def get_disclosure(self, obj):
+        """Уншигчид ил тод байх ёстой тэмдэглэгээ (Зар сурталчилгааны тухай хууль, Сонгуулийн хууль)."""
+        c = obj.compliance or {}
+        paid = bool(c.get("sponsored") or c.get("political_ad"))
+        return {"sponsored": bool(c.get("sponsored")), "political_ad": bool(c.get("political_ad")),
+                "sponsor_name": c.get("sponsor_name", "") if paid else "",
+                "conflict_of_interest": c.get("conflict_of_interest", "")}
 
     def get_trust(self, obj):
         """Нийтэд харагдах «Pulse Trust» карт — дотоод алдааны мэдээлэлгүй."""

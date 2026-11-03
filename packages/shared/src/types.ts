@@ -5,7 +5,9 @@ export type ContentStatus =
 export interface User {
   id: number; email: string; full_name: string; phone: string; organization: string;
   bio: string; role: Role; is_active: boolean; created_at: string; last_login?: string | null;
-  is_verified?: boolean; verification_requested_at?: string | null; province?: number | null; province_name?: string | null; district?: number | null;
+  is_verified?: boolean; verification_requested_at?: string | null; province?: number | null;
+  press_card_no?: string; legal_name?: string; registry_no?: string; responsible_editor?: string;
+  terms_accepted_at?: string | null; privacy_consent_at?: string | null; ethics_accepted_at?: string | null; province_name?: string | null; district?: number | null;
   show_email?: boolean; show_phone?: boolean; show_org?: boolean;
   experiences?: Experience[]; portfolio?: PortfolioItem[];
 }
@@ -49,6 +51,8 @@ export interface Content {
   pledge_items?: { id: number; text: string; politician: string; politician_id: number }[];
   versions?: ContentVersion[]; checklist_items?: { key: string; label: string; required: boolean }[];
   newsroom?: number | null; newsroom_name?: string | null; price?: number;
+  compliance?: Compliance; corrections?: Correction[];
+  disclosure?: { sponsored: boolean; political_ad: boolean; sponsor_name: string; conflict_of_interest: string };
   id: number; title: string; body: string;
   category: number | null; category_name: string | null; category_slug: string | null;
   province: number | null; province_name: string | null;
@@ -115,8 +119,25 @@ export interface Membership {
   id: number; status: "pending" | "active" | "rejected" | "left"; status_label: string; message: string;
   created_at: string; decided_at: string | null; newsroom: { id: number; name: string }; journalist: PersonCard;
 }
+export interface Compliance {
+  facts_verified?: boolean; no_defamation?: boolean; personal_data?: "none" | "consent" | "public_interest";
+  minors_involved?: boolean; minors_protected?: boolean; conflict_of_interest?: string;
+  sponsored?: boolean; sponsor_name?: string; political_ad?: boolean;
+}
+export interface Correction { id: number; kind: "correction" | "reply" | "update"; kind_label: string; text: string; created_at: string }
+export interface ExternalArticle {
+  id: number; source: string; source_name: string; url: string; title: string; title_mn: string; snippet: string;
+  summary_mn: string; language: string; published_at: string | null; category: number | null; category_name: string | null;
+  relevance: number; ai_source: "gemini" | "rules";
+}
+export interface PurchaseQuote {
+  provider: string; live: boolean; fee_pct: number;
+  options: { license_type: string; label: string; amount: number; vat_amount: number; platform_fee: number; author_net: number; available: boolean }[];
+}
 export interface Purchase {
-  id: number; status: "pending" | "paid" | "cancelled"; status_label: string; amount: number; invoice_code: string;
+  license_type: string; license_label: string; vat_amount: number; platform_fee: number; author_net: number;
+  provider: string; provider_ref: string; ebarimt_no: string; refund_reason: string; demo: boolean;
+  id: number; status: "pending" | "paid" | "cancelled" | "refunded"; status_label: string; amount: number; invoice_code: string;
   created_at: string; paid_at: string | null; content: { id: number; title: string; author_name: string };
   buyer: { id: number; name: string };
 }

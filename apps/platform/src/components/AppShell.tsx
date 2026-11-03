@@ -12,7 +12,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
   }, [user]);
 
   const nav = [{ href: "/", label: "Мэдээ" }, { href: "/stats", label: "Статистик" }, { href: "/pledges", label: "Амлалт" },
-    { href: "/journalists", label: "Сэтгүүлчид" }, { href: "/newsrooms", label: "Редакцууд" }];
+    { href: "/world", label: "Дэлхийд" }, { href: "/journalists", label: "Сэтгүүлчид" }, { href: "/newsrooms", label: "Редакцууд" }];
   if (user?.role === "journalist") nav.push({ href: "/journalist", label: "Миний контент" });
   if (user?.role === "editor" || user?.role === "admin") nav.push({ href: "/editor", label: "Шалгах жагсаалт" });
   if (user?.role === "newsroom") nav.push({ href: "/newsroom", label: "Редакцын самбар" });

@@ -2,5 +2,6 @@
   "version": 2,
   "regions": ["sin1"],
   "builds": [{ "src": "api/index.py", "use": "@vercel/python", "config": { "maxDuration": 60 } }],
-  "routes": [{ "src": "/(.*)", "dest": "api/index.py" }]
+  "routes": [{ "src": "/(.*)", "dest": "api/index.py" }],
+  "crons": [{ "path": "/api/v1/world-news/refresh/", "schedule": "0 1 * * *" }]
 }

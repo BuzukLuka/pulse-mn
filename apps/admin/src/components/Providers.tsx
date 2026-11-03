@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 function Frame({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
   const nav = user?.role === "admin"
-    ? [{ href: "/", label: "◎  Самбар" }, { href: "/users", label: "👥  Хэрэглэгч, эрх" }, { href: "/content", label: "📰  Контент хяналт" }, { href: "/pledges", label: "🎯  Амлалт" }, { href: "/stats", label: "📊  Статистик" }, { href: "/complaints", label: "💬  Гомдол" }, { href: "/backup", label: "💾  Нөөцлөлт" }, { href: "/audit", label: "🧾  Аудит лог" }]
+    ? [{ href: "/", label: "◎  Самбар" }, { href: "/users", label: "👥  Хэрэглэгч, эрх" }, { href: "/content", label: "📰  Контент хяналт" }, { href: "/pledges", label: "🎯  Амлалт" }, { href: "/stats", label: "📊  Статистик" }, { href: "/complaints", label: "💬  Гомдол" }, { href: "/payments", label: "💳  Төлбөр" }, { href: "/backup", label: "💾  Нөөцлөлт" }, { href: "/audit", label: "🧾  Аудит лог" }]
     : [];
   if (!user) return <Shell brand="Админ" nav={[]} footer={false}>{children}</Shell>;
   return (

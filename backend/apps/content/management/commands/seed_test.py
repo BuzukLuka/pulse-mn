@@ -115,7 +115,9 @@ COMPLAINTS = [("wrong", "Мэдээнд дурдсан тоо албан ёсн�
               ("privacy", "Зурган дээр хүүхдийн нүүр бүдгэрүүлээгүй байна."),
               ("other", "Гарчиг агуулгаасаа хэт сенсаац хөөсөн байна."),
               ("copyright", "Зургийг зохиогчийн зөвшөөрөлгүй ашигласан.")]
-CHECKLIST = {"facts": True, "source": True, "rights": True, "privacy": True, "tone": True}
+CHECKLIST = {"facts": True, "source": True, "rights": True, "privacy": True, "defamation": True, "minors": True,
+             "ads": True, "tone": True}
+COMPLIANCE = {"facts_verified": True, "no_defamation": True, "personal_data": "public_interest"}
 PASSWORD = "Pulse12345!"
 
 
@@ -205,7 +207,7 @@ class Command(BaseCommand):
                 district=dist, event_date=today - timedelta(days=days_ago), source=f"{self.rng.choice(ORGS)} (демо)",
                 tags=["демо", self.cats[slug].name.lower(), prov.name.lower()],
                 content_type=self.rng.choice([ContentType.NEWS] * 4 + [ContentType.ARTICLE, ContentType.PHOTO]),
-                license=self.rng.choice(list(License.values)), copyright_declared=True,
+                license=self.rng.choice(list(License.values)), copyright_declared=True, compliance=dict(COMPLIANCE),
                 location_detail=f"{dist.name if dist else prov.name} төв")
             roll = self.rng.random()
             if roll < 0.06 or not author.is_verified:   # ноорог хэвээр (баталгаажаагүй бол илгээх боломжгүй)

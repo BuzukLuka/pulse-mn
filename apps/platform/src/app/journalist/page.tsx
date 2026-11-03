@@ -64,12 +64,13 @@ function Sales() {
   const [items, setItems] = useState<Purchase[]>([]);
   useEffect(() => { api<Purchase[]>("/purchases/").then(setItems).catch(() => {}); }, []);
   if (!items.length) return null;
-  const paid = items.filter((p) => p.status === "paid").reduce((s, p) => s + p.amount, 0);
+  const paid = items.filter((p) => p.status === "paid").reduce((s, p) => s + p.author_net, 0);
   return (
     <div className="card"><div className="row spread"><h3>💳 Борлуулалт (ДЕМО)</h3><b>{fmtMoney(paid)}</b></div>
       {items.map((p) => <div key={p.id} className="row spread review"><div><a href={`/news/${p.content.id}`}>{p.content.title}</a>
         <div className="muted">{p.buyer.name} · {fmtDate(p.created_at)}</div></div>
-        <span className={`badge ${PURCHASE_TONE[p.status]}`}>{p.status_label} · {fmtMoney(p.amount)}</span></div>)}</div>
+        <span className={`badge ${PURCHASE_TONE[p.status]}`}>{p.status_label} · танд {fmtMoney(p.author_net)}</span></div>)}
+      <small className="muted">Дүн нь НӨАТ (10%), платформын шимтгэл хассан, танд шилжих дүн. <a href="/legal/payments">Нөхцөл</a></small></div>
   );
 }
 

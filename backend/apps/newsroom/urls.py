@@ -1,12 +1,13 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
 
-from .views import (MembershipEndView, MyMembershipsView, NewsroomDashboardViewSet, NewsroomListView,
+from .views import (AdminPurchaseViewSet, MembershipEndView, MyMembershipsView, NewsroomDashboardViewSet, NewsroomListView,
                     NewsroomPublicView, PurchaseViewSet, RatingSuggestView, RatingView, RequestVerificationView)
 
 router = DefaultRouter()
 router.register("newsroom", NewsroomDashboardViewSet, basename="newsroom")
 router.register("purchases", PurchaseViewSet, basename="purchases")
+router.register("admin/purchases", AdminPurchaseViewSet, basename="admin-purchases")
 
 urlpatterns = [
     path("newsrooms/", NewsroomListView.as_view()),

@@ -5,12 +5,13 @@ import { useCallback, useEffect, useState } from "react";
 export default function AdminComplaints() {
   const [status, setStatus] = useState("open"); const [d, setD] = useState<Paginated<Complaint> | null>(null);
   const [sel, setSel] = useState<Complaint | null>(null); const [res, setRes] = useState(""); const [err, setErr] = useState("");
+  const [corr, setCorr] = useState("");
   const load = useCallback(() => api<Paginated<Complaint>>(`/admin/complaints/?status=${status}`).then(setD), [status]);
   useEffect(() => { load(); }, [load]);
   const kind = (k: string) => COMPLAINT_KINDS.find(([x]) => x === k)?.[1] ?? k;
   async function resolve(st: "resolved" | "dismissed") {
     setErr("");
-    try { await api(`/admin/complaints/${sel!.id}/resolve/`, { method: "POST", body: { status: st, resolution: res } }); setSel(null); setRes(""); load(); }
+    try { await api(`/admin/complaints/${sel!.id}/resolve/`, { method: "POST", body: { status: st, resolution: res, correction: corr } }); setSel(null); setRes(""); setCorr(""); load(); }
     catch (x) { setErr(x instanceof ApiError ? x.message : "Алдаа гарлаа."); }
   }
   const link = (c: Complaint) => c.target_type === "content" ? `/review/${c.target_id}` : null;
@@ -33,6 +34,10 @@ export default function AdminComplaints() {
           {link(sel) && <p className="muted">Мэдээг <a href={`/content`}>Контент хяналт</a> хэсгээс нууж болно.</p>}
           {err && <Alert>{err}</Alert>}
           <div className="field"><span>Шийдвэрийн тайлбар (заавал, гомдол гаргагчид мэдэгдэнэ)</span><textarea value={res} onChange={(e) => setRes(e.target.value)} /></div>
+          {sel.target_type === "content" && (
+            <div className="field"><span>{sel.kind === "reply" ? "Хариу тайлбар" : "Залруулга"} — мэдээн дээр нийтлэх (заавал биш, «Шийдвэрлэсэн» үед)</span>
+              <textarea style={{ minHeight: 70 }} value={corr} onChange={(e) => setCorr(e.target.value)} /></div>
+          )}
           <div className="row"><button className="btn ok" onClick={() => resolve("resolved")}>Шийдвэрлэсэн</button><button className="btn secondary" onClick={() => resolve("dismissed")}>Хүлээн аваагүй</button><button className="btn secondary" onClick={() => setSel(null)}>Болих</button></div>
         </div></div>
       )}

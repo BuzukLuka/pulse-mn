@@ -1,6 +1,6 @@
 "use client";
 import {
-  api, ApiError, Alert, Field, TrustCard, CONTENT_TYPES, LICENSES, type AiSuggestion, type Category, type Content,
+  api, ApiError, Alert, Field, TrustCard, CONTENT_TYPES, LICENSES, PERSONAL_DATA, type AiSuggestion, type Category, type Compliance, type Content,
   type District, type Membership, type Option, type PersonCard, type Pledge, type Verification, useAuth,
 } from "@pulse/shared";
 import { useEffect, useState, type FormEvent } from "react";
@@ -19,6 +19,8 @@ export default function ContentForm({ initial, onDone }: { initial?: Content; on
   const { user } = useAuth();
   const [newsrooms, setNewsrooms] = useState<PersonCard[]>([]); const [mineIds, setMineIds] = useState<Set<number>>(new Set());
   const [copyright, setCopyright] = useState(!!initial?.copyright_declared);
+  const [comp, setComp] = useState<Compliance>(initial?.compliance ?? {});
+  const tick = (k: keyof Compliance) => (e: { target: { checked: boolean } }) => setComp({ ...comp, [k]: e.target.checked });
   const [pledgeIds, setPledgeIds] = useState<number[]>(initial?.pledges ?? []);
   const [allPledges, setAllPledges] = useState<Pledge[]>([]);
   const [trust, setTrust] = useState<Verification | null>(initial?.verification ?? null);
@@ -49,7 +51,7 @@ export default function ContentForm({ initial, onDone }: { initial?: Content; on
     district: f.district ? Number(f.district) : null,
     content_type: f.content_type, event_time: f.event_time || null, location_detail: f.location_detail,
     license: f.license, copyright_declared: copyright, pledges: pledgeIds,
-    newsroom: f.newsroom ? Number(f.newsroom) : null, price: Math.max(0, Number(f.price) || 0),
+    newsroom: f.newsroom ? Number(f.newsroom) : null, price: Math.max(0, Number(f.price) || 0), compliance: comp,
   });
 
   async function suggest() {
@@ -179,6 +181,30 @@ export default function ContentForm({ initial, onDone }: { initial?: Content; on
         <label className="check-row"><input type="checkbox" checked={copyright} onChange={(e) => setCopyright(e.target.checked)} />
           Энэ материал миний бүтээл, эсвэл ашиглах зөвшөөрөлтэй гэдгээ баталж байна.</label>
         {errs.copyright_declared && <small className="err">{errs.copyright_declared}</small>}
+      </div>
+
+      <div className="card">
+        <h3>⚖️ Хууль, ёс зүйн мэдэгдэл (илгээхэд заавал)</h3>
+        <p className="muted" style={{ marginTop: 0 }}>Үндэслэл: <a href="/legal/journalists" target="_blank">сэтгүүлчид мөрдөх шаардлага</a>. Ивээн тэтгэсэн, ашиг сонирхлын мэдэгдэл уншигчид ил харагдана.</p>
+        {errs.compliance && <Alert>{errs.compliance}</Alert>}
+        <label className="check-row consent"><input type="checkbox" checked={!!comp.facts_verified} onChange={tick("facts_verified")} />
+          <span>Баримтыг шалгасан; санаатай худал, төөрөгдүүлсэн мэдээлэл агуулаагүй.</span></label>
+        <label className="check-row consent"><input type="checkbox" checked={!!comp.no_defamation} onChange={tick("no_defamation")} />
+          <span>Хэн нэгнийг гүтгэсэн, доромжилсон, үзэн ядалт өдөөсөн агуулгагүй.</span></label>
+        <Field label="Хувь хүний мэдээлэл">
+          <select value={comp.personal_data ?? ""} onChange={(e) => setComp({ ...comp, personal_data: e.target.value as Compliance["personal_data"] })}>
+            <option value="">— сонгох —</option>{PERSONAL_DATA.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select>
+        </Field>
+        <label className="check-row consent"><input type="checkbox" checked={!!comp.minors_involved} onChange={tick("minors_involved")} /> <span>Мэдээнд хүүхэд (18 хүртэлх) оролцсон</span></label>
+        {comp.minors_involved && <label className="check-row consent" style={{ marginLeft: 26 }}><input type="checkbox" checked={!!comp.minors_protected} onChange={tick("minors_protected")} />
+          <span>Хүүхдийн нэр, нүүр, хаяг, сургуулийг нууцалсан эсвэл асран хамгаалагчийн зөвшөөрөлтэй.</span></label>}
+        <div className="two">
+          <label className="check-row consent"><input type="checkbox" checked={!!comp.sponsored} onChange={tick("sponsored")} /> <span>Ивээн тэтгэсэн / захиалгат материал</span></label>
+          <label className="check-row consent"><input type="checkbox" checked={!!comp.political_ad} onChange={tick("political_ad")} /> <span>Улс төрийн сурталчилгаа (нам, нэр дэвшигч)</span></label>
+        </div>
+        {(comp.sponsored || comp.political_ad) && <Field label="Захиалагч (уншигчид харагдана)"><input value={comp.sponsor_name ?? ""} onChange={(e) => setComp({ ...comp, sponsor_name: e.target.value })} /></Field>}
+        <Field label="Ашиг сонирхлын зөрчил (байвал бичнэ — уншигчид харагдана)">
+          <input value={comp.conflict_of_interest ?? ""} placeholder="Жишээ: Зохиогч тус байгууллагад өмнө ажиллаж байсан" onChange={(e) => setComp({ ...comp, conflict_of_interest: e.target.value })} /></Field>
       </div>
 
       {allPledges.length > 0 && (

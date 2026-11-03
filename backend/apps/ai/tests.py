@@ -28,7 +28,8 @@ class TrustTests(APITestCase):
     def mk(self, **kw):
         d = dict(author=self.j, title="Малын тоо нэмэгдлээ", body=BODY, source="Аймгийн ХАА газар",
                  category=Category.objects.get(slug="agriculture"), province=Province.objects.get(name="Дорноговь"),
-                 event_date=date.today(), copyright_declared=True)
+                 event_date=date.today(), copyright_declared=True,
+                 compliance={"facts_verified": True, "no_defamation": True, "personal_data": "none"})
         d.update(kw)
         return Content.objects.create(**d)
 
@@ -80,7 +81,7 @@ class TrustTests(APITestCase):
                              {"decision": "approve", "checklist": {"facts": True}}, format="json")
         self.assertEqual(r.status_code, 422)
         r = self.client.post(f"/api/v1/review/{c.pk}/decide/",
-                             {"decision": "approve", "checklist": {"facts": True, "source": True, "rights": True}}, format="json")
+                             {"decision": "approve", "checklist": {k: True for k in ("facts", "source", "rights", "privacy", "defamation", "minors")}}, format="json")
         self.assertEqual(r.status_code, 200, r.content)
         self.client.credentials()
         r = self.client.get(f"/api/v1/news/{c.pk}/")

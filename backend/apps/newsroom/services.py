@@ -77,6 +77,10 @@ def active_newsroom_ids(journalist):
 def request_verification(user):
     if user.is_verified:
         raise Conflict("Таны бүртгэл аль хэдийн баталгаажсан.")
+    from apps.accounts.services import verification_missing
+    missing = verification_missing(user)
+    if missing:
+        raise Unprocessable(missing)
     user.verification_requested_at = timezone.now()
     user.save(update_fields=["verification_requested_at"])
     audit.log(user, "user.verification_request", "user", user.pk)
@@ -87,17 +91,31 @@ def request_verification(user):
 
 # ---------- ДЕМО төлбөр ----------
 @transaction.atomic
-def create_purchase(buyer, content):
+def create_purchase(buyer, content, license_type="standard", accept_terms=False):
+    from .payments import LICENSES, breakdown, get_provider
     if content.status != "published":
         raise Unprocessable("Зөвхөн нийтлэгдсэн мэдээг худалдан авна.")
     if not content.price:
         raise Unprocessable("Энэ мэдээ худалдаанд гараагүй.")
-    existing = Purchase.objects.filter(buyer=buyer, content=content).exclude(status="cancelled").first()
+    if license_type not in LICENSES:
+        raise Unprocessable("Лицензийн төрөл буруу.")
+    if not accept_terms:
+        raise Unprocessable("Лицензийн нөхцөл (зохиогчийн эрх, эх сурвалж заах) зөвшөөрнө үү.")
+    if Purchase.objects.filter(content=content, license_type="exclusive", status="paid").exists():
+        raise Conflict("Энэ мэдээний онцгой эрхийг өөр редакц авсан тул худалдаалах боломжгүй.")
+    if license_type == "exclusive" and Purchase.objects.filter(content=content, status="paid").exclude(buyer=buyer).exists():
+        raise Conflict("Энэ мэдээг өөр редакц аль хэдийн авсан тул онцгой эрх олгох боломжгүй.")
+    existing = Purchase.objects.filter(buyer=buyer, content=content).exclude(status__in=["cancelled", "refunded"]).first()
     if existing:
         return existing
-    p = Purchase.objects.create(buyer=buyer, content=content, amount=content.price,
-                                invoice_code=f"PMN-{secrets.token_hex(4).upper()}")
-    audit.log(buyer, "purchase.create", "purchase", p.pk, None, {"content": content.pk, "amount": p.amount})
+    provider = get_provider()
+    gross = content.price * LICENSES[license_type][1]
+    p = Purchase(buyer=buyer, content=content, license_type=license_type, provider=provider.name,
+                 invoice_code=f"PMN-{secrets.token_hex(4).upper()}", terms_accepted_at=timezone.now(), **breakdown(gross))
+    p.provider_ref = provider.create_invoice(p)["provider_ref"]
+    p.save()
+    audit.log(buyer, "purchase.create", "purchase", p.pk, None,
+              {"content": content.pk, "amount": p.amount, "license": license_type})
     return p
 
 
@@ -108,11 +126,32 @@ def confirm_purchase(buyer, purchase):
         raise Unprocessable("Энэ нэхэмжлэх таных биш.")
     if purchase.status != "pending":
         raise Conflict("Нэхэмжлэх аль хэдийн шийдэгдсэн.")
+    from .payments import get_provider
+    if purchase.license_type == "exclusive" and Purchase.objects.filter(
+            content=purchase.content, status="paid").exclude(pk=purchase.pk).exists():
+        raise Conflict("Энэ хооронд өөр редакц худалдан авсан тул онцгой эрх олгох боломжгүй.")
     purchase.status, purchase.paid_at = "paid", timezone.now()
-    purchase.save(update_fields=["status", "paid_at"])
+    purchase.ebarimt_no = get_provider().issue_receipt(purchase)
+    purchase.save(update_fields=["status", "paid_at", "ebarimt_no"])
     audit.log(buyer, "purchase.paid", "purchase", purchase.pk, {"status": "pending"}, {"status": "paid"})
     notify(purchase.content.author, "Таны мэдээг редакц худалдан авлаа",
-           f"{display_name(buyer)} · {purchase.content.title} · {purchase.amount:,}₮", purchase.content_id)
+           f"{display_name(buyer)} · {purchase.content.title} · {purchase.get_license_type_display()} · "
+           f"танд {purchase.author_net:,}₮ (НӨАТ, шимтгэл хассан)", purchase.content_id)
+    return purchase
+
+
+@transaction.atomic
+def refund_purchase(admin, purchase, reason):
+    """Админ төлөгдсөн худалдан авалтыг буцаана (маргаан, зохиогчийн эрхийн зөрчил гэх мэт)."""
+    if purchase.status != "paid":
+        raise Conflict("Зөвхөн төлөгдсөн худалдан авалтыг буцаана.")
+    if not reason.strip():
+        raise Unprocessable("Буцаалтын шалтгаан заавал.")
+    purchase.status, purchase.refund_reason = "refunded", reason.strip()[:300]
+    purchase.save(update_fields=["status", "refund_reason"])
+    audit.log(admin, "purchase.refund", "purchase", purchase.pk, {"status": "paid"}, {"status": "refunded"}, reason)
+    for u in (purchase.buyer, purchase.content.author):
+        notify(u, "Худалдан авалтыг буцаалаа", f"{purchase.content.title} · {reason.strip()[:200]}", purchase.content_id)
     return purchase
 
 

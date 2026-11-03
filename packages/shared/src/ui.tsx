@@ -87,6 +87,8 @@ export function Shell({ brand, nav, right, children, variant = "site", footer = 
           </div>
           <div><h4>Үзэх</h4><a href="/">Мэдээ</a><a href="/stats">Статистик</a><a href="/pledges">Амлалтын хяналт</a><a href="/journalists">Сэтгүүлчид</a></div>
           <div><h4>Оролцох</h4><a href="/register">Сэтгүүлчээр бүртгүүлэх</a><a href="/login">Нэвтрэх</a><a href="/complaints">Гомдол, санал</a></div>
+          <div><h4>Эрх зүй</h4><a href="/legal/terms">Үйлчилгээний нөхцөл</a><a href="/legal/privacy">Хувийн мэдээлэл</a>
+            <a href="/legal/ethics">Ёс зүйн дүрэм</a><a href="/legal">Бүх баримт бичиг</a></div>
         </div>
         <div className="fine"><span>© {new Date().getFullYear()} Pulse.mn</span><span>Баримтад суурилсан орон нутгийн мэдээлэл</span></div>
       </footer>}

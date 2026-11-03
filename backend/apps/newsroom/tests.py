@@ -30,7 +30,8 @@ class NewsroomFlowTests(APITestCase):
     def draft(self, **kw):
         d = {"title": "Бэлчээрийн даац тооцоолол", "body": BODY, "category": Category.objects.get(slug="agriculture").pk,
              "province": Province.objects.get(name="Дорноговь").pk, "event_date": date.today().isoformat(),
-             "source": "Аймгийн ХАА газар", "copyright_declared": True, **kw}
+             "source": "Аймгийн ХАА газар", "copyright_declared": True,
+             "compliance": {"facts_verified": True, "no_defamation": True, "personal_data": "none"}, **kw}
         r = self.client.post("/api/v1/content/", d, format="json")
         self.assertEqual(r.status_code, 201, r.content)
         return r.data["id"]
@@ -39,6 +40,9 @@ class NewsroomFlowTests(APITestCase):
         self.login("j@t.mn")
         cid = self.draft()
         self.assertEqual(self.client.post(f"/api/v1/content/{cid}/submit/").status_code, 422)
+        # сэтгүүлчийн үнэмлэх / байгууллагагүйгээр хүсэлт илгээх боломжгүй
+        self.assertEqual(self.client.post("/api/v1/auth/request-verification/").status_code, 422)
+        self.client.patch("/api/v1/auth/me/", {"press_card_no": "MN-2024-0457"}, format="json")
         self.assertEqual(self.client.post("/api/v1/auth/request-verification/").status_code, 200)
         self.assertTrue(Notification.objects.filter(user=self.admin, title__contains="Баталгаажуулалт").exists())
         self.login("a@t.mn")
@@ -90,9 +94,9 @@ class NewsroomFlowTests(APITestCase):
     def test_demo_purchase_and_ratings(self):
         c = Content.objects.create(author=self.j, title="Худалдах мэдээ", body=BODY, status="published", price=25000)
         self.login("c@t.mn")
-        self.assertEqual(self.client.post("/api/v1/purchases/", {"content": c.pk}, format="json").status_code, 403)
+        self.assertEqual(self.client.post("/api/v1/purchases/", {"content": c.pk, "accept_terms": True}, format="json").status_code, 403)
         self.login("n@t.mn")
-        p = self.client.post("/api/v1/purchases/", {"content": c.pk}, format="json").data
+        p = self.client.post("/api/v1/purchases/", {"content": c.pk, "accept_terms": True}, format="json").data
         self.assertEqual((p["status"], p["amount"]), ("pending", 25000))
         self.assertEqual(self.client.post(f"/api/v1/purchases/{p['id']}/confirm/").data["status"], "paid")
         self.assertTrue(Notification.objects.filter(user=self.j, title__contains="худалдан авлаа").exists())

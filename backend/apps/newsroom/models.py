@@ -20,10 +20,21 @@ class Membership(models.Model):
 
 class Purchase(models.Model):
     """Редакц нийтлэгдсэн мэдээг худалдан авах (ДЕМО төлбөр — бодит төлбөрийн систем холбогдоогүй)."""
-    STATUSES = [("pending", "Төлбөр хүлээгдэж буй"), ("paid", "Төлөгдсөн"), ("cancelled", "Цуцалсан")]
+    STATUSES = [("pending", "Төлбөр хүлээгдэж буй"), ("paid", "Төлөгдсөн"), ("cancelled", "Цуцалсан"),
+                ("refunded", "Буцаан олгосон")]
+    LICENSES = [("standard", "Энгийн лиценз"), ("exclusive", "Онцгой эрх")]
     content = models.ForeignKey("content.Content", on_delete=models.CASCADE, related_name="purchases")
     buyer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="purchases")
-    amount = models.PositiveIntegerField()
+    license_type = models.CharField(max_length=10, choices=LICENSES, default="standard")
+    amount = models.PositiveIntegerField()                       # НӨАТ шингэсэн нийт дүн
+    vat_amount = models.PositiveIntegerField(default=0)
+    platform_fee = models.PositiveIntegerField(default=0)
+    author_net = models.PositiveIntegerField(default=0)          # сэтгүүлчид шилжүүлэх дүн
+    provider = models.CharField(max_length=20, default="demo")
+    provider_ref = models.CharField(max_length=60, blank=True)
+    ebarimt_no = models.CharField(max_length=40, blank=True)     # И-баримтын дугаар (ДЕМО)
+    terms_accepted_at = models.DateTimeField(null=True, blank=True)
+    refund_reason = models.CharField(max_length=300, blank=True)
     invoice_code = models.CharField(max_length=20, unique=True)
     status = models.CharField(max_length=10, choices=STATUSES, default="pending", db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)

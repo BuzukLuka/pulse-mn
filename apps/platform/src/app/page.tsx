@@ -1,5 +1,5 @@
 "use client";
-import { api, Cover, Empty, fmtDate, qs, type Category, type Content, type Option, type Paginated } from "@pulse/shared";
+import { api, Cover, Empty, fmtDate, qs, type Category, type Content, type ExternalArticle, type Option, type Paginated } from "@pulse/shared";
 import { useEffect, useState } from "react";
 
 const imageOf = (c: Content) => c.media.find((m) => m.kind === "image")?.url;
@@ -116,6 +116,8 @@ export default function Home() {
         </>
       )}
 
+      <WorldStrip />
+
       {data && (data.next || data.previous) && (
         <div className="pager">
           <button className="btn secondary sm" disabled={!data.previous} onClick={() => setPage(page - 1)}>← Өмнөх</button>
@@ -124,5 +126,24 @@ export default function Home() {
         </div>
       )}
     </>
+  );
+}
+
+/** AI-аар шүүсэн «Дэлхийд Монголын тухай» мэдээний тасалбар. */
+function WorldStrip() {
+  const [items, setItems] = useState<ExternalArticle[]>([]);
+  useEffect(() => { api<Paginated<ExternalArticle>>("/world-news/", { auth: false }).then((d) => setItems(d.results.slice(0, 4))).catch(() => {}); }, []);
+  if (!items.length) return null;
+  return (
+    <section style={{ marginTop: 36 }}>
+      <div className="row spread"><h2 style={{ margin: 0 }}>🌍 Дэлхийд Монголын тухай</h2><a href="/world">Бүгдийг харах →</a></div>
+      <p className="muted" style={{ marginTop: 4 }}>Олон улсын хэвлэлээс AI автоматаар шүүсэн</p>
+      <div className="grid">{items.map((a) => (
+        <a key={a.id} href={a.url} target="_blank" rel="noopener noreferrer" className="card world-card">
+          <div className="src"><b>{a.source_name}</b>{a.category_name && <span className="badge gray">{a.category_name}</span>}</div>
+          <h3 style={{ margin: 0, fontSize: 15.5 }}>{a.title_mn || a.title}</h3>
+          <small className="muted">{fmtDate(a.published_at)} · эх сурвалж ↗</small>
+        </a>))}</div>
+    </section>
   );
 }

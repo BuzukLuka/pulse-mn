@@ -38,7 +38,31 @@ def validate_for_submit(content):
         errors["source"] = ["Эх сурвалж заавал."]
     if not content.copyright_declared:
         errors["copyright_declared"] = ["Зохиогчийн эрхийн мэдэгдэл (өөрийн материал эсвэл зөвшөөрөлтэй) заавал."]
+    problems = compliance_problems(content.compliance or {})
+    if problems:
+        errors["compliance"] = problems
     return errors
+
+
+# Сэтгүүлчийн хууль ёсны мэдэгдэл. Үндэслэл: Хэвлэлийн эрх чөлөөний тухай хууль, Зөрчлийн тухай хууль (гүтгэх),
+# Хувийн мэдээлэл хамгаалах тухай хууль, Хүүхдийн эрхийн тухай хууль, Зар сурталчилгааны тухай хууль, Сонгуулийн хууль.
+PERSONAL_DATA = {"none": "Хувь хүний мэдээлэл агуулаагүй", "consent": "Холбогдох хүний зөвшөөрөлтэй",
+                 "public_interest": "Олон нийтийн ашиг сонирхолд (албан тушаалтан, нийтийн үйл ажиллагаа)"}
+
+
+def compliance_problems(c):
+    out = []
+    if not c.get("facts_verified"):
+        out.append("Баримтыг шалгасан, санаатай худал мэдээлэл агуулаагүй гэдгээ баталгаажуулна уу.")
+    if not c.get("no_defamation"):
+        out.append("Гүтгэлэг, доромжлол, үзэн ядалт өдөөсөн агуулгагүй гэдгээ баталгаажуулна уу.")
+    if c.get("personal_data") not in PERSONAL_DATA:
+        out.append("Хувь хүний мэдээллийн талаар сонголт хийнэ үү.")
+    if c.get("minors_involved") and not c.get("minors_protected"):
+        out.append("Хүүхдийн нэр, нүүр, хаягийг нууцалсан эсвэл асран хамгаалагчийн зөвшөөрөлтэй гэдгээ баталгаажуулна уу.")
+    if (c.get("sponsored") or c.get("political_ad")) and not str(c.get("sponsor_name", "")).strip():
+        out.append("Ивээн тэтгэсэн / улс төрийн сурталчилгааны захиалагчийг заана уу.")
+    return out
 
 
 @transaction.atomic
@@ -107,10 +131,14 @@ def find_duplicates(content, use_ai=False):
     return [{**d, "reason": d["reason"]} for d in duplicate_items(content, use_ai=use_ai)]
 
 
-REQUIRED_CHECKS = ["facts", "source", "rights"]
 CHECKLIST = [("facts", "Баримт, тоо нотолгоотой", True), ("source", "Эх сурвалж найдвартай", True),
-             ("rights", "Зохиогчийн эрх, зөвшөөрөл зөв", True), ("privacy", "Хувийн мэдээлэл хамгаалагдсан", False),
+             ("rights", "Зохиогчийн эрх, зөвшөөрөл зөв", True),
+             ("privacy", "Хувийн мэдээлэл хууль ёсны (зөвшөөрөл эсвэл нийтийн ашиг сонирхол)", True),
+             ("defamation", "Гүтгэлэг, доромжлол, үзэн ядалт өдөөсөн агуулгагүй", True),
+             ("minors", "Хүүхдийн нэр, нүүр, хаяг хамгаалагдсан (хамааралгүй бол тэмдэглэнэ)", True),
+             ("ads", "Ивээн тэтгэсэн / улс төрийн сурталчилгааг тэмдэглэсэн", False),
              ("tone", "Хэл найруулга, ёс зүй", False)]
+REQUIRED_CHECKS = [k for k, _, req in CHECKLIST if req]
 
 DECISIONS = {
     "approve": Status.PUBLISHED,
@@ -179,7 +207,7 @@ def send_to_newsroom(content, actor, newsroom):
 
 
 HISTORY_LABELS = {
-    "content.send_newsroom": "Редакцад илгээсэн",
+    "content.send_newsroom": "Редакцад илгээсэн", "content.correction": "Залруулга нэмсэн",
     "content.submit": "Шалгалтад илгээсэн", "content.approve": "Нийтлэгдсэн", "content.return": "Засварт буцаасан",
     "content.reject": "Татгалзсан", "content.hide": "Түр нуусан", "content.restore": "Сэргээсэн",
 }
@@ -196,11 +224,34 @@ def status_history(content):
     return out
 
 
+LEGAL_BASES = {"court_order": "Шүүхийн шийдвэр", "privacy": "Хувийн мэдээлэл хамгаалах", "copyright": "Зохиогчийн эрх",
+               "defamation": "Гүтгэлэг, нэр төр", "minor": "Хүүхдийн эрх", "election": "Сонгуулийн хууль",
+               "ethics": "Ёс зүйн зөрчил", "other": "Бусад"}
+
+
 @transaction.atomic
-def set_visibility(content, admin_user, hide, reason):
-    """FR-062: зөрчилтэй нийтлэгдсэн мэдээг түр нуух / сэргээх."""
+def add_correction(content, actor, kind, text):
+    """Залруулга / хариу тайлбар нийтлэх (зөвхөн нийтлэгдсэн мэдээнд)."""
+    from .models import Correction
+    if content.status != Status.PUBLISHED:
+        raise Conflict("Зөвхөн нийтлэгдсэн мэдээнд залруулга нэмнэ.")
+    if kind not in dict(Correction.KINDS) or len(text.strip()) < 10:
+        raise Unprocessable("Төрөл болон 10-аас дээш тэмдэгттэй тайлбар заавал.")
+    c = Correction.objects.create(content=content, kind=kind, text=text.strip(), created_by=actor)
+    audit.log(actor, "content.correction", "content", content.pk, None, {"kind": kind}, text.strip()[:200])
+    notify(content.author, f"Таны мэдээнд {c.get_kind_display().lower()} нэмэгдлээ", text.strip()[:200], content.pk)
+    return c
+
+
+@transaction.atomic
+def set_visibility(content, admin_user, hide, reason, legal_basis="other"):
+    """FR-062: зөрчилтэй нийтлэгдсэн мэдээг түр нуух / сэргээх (нуухад хууль зүйн үндэслэл заана)."""
     if not reason.strip():
         raise Unprocessable("Шалтгаан заавал бичнэ.")
+    if hide:
+        if legal_basis not in LEGAL_BASES:
+            raise Unprocessable("Хууль зүйн үндэслэл буруу.")
+        reason = f"[{LEGAL_BASES[legal_basis]}] {reason.strip()}"
     target = Status.HIDDEN if hide else Status.PUBLISHED
     if not content.can_transition(target):
         raise Conflict("Энэ төлөвт үйлдэл хийх боломжгүй.")
@@ -209,4 +260,5 @@ def set_visibility(content, admin_user, hide, reason):
     content.save(update_fields=["status", "updated_at"])
     audit.log(admin_user, "content.hide" if hide else "content.restore", "content", content.pk,
               {"status": before}, {"status": target}, reason)
+    notify(content.author, "Таны мэдээг түр нуулаа" if hide else "Таны мэдээг сэргээлээ", reason, content.pk)
     return content

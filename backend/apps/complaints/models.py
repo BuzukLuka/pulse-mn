@@ -5,7 +5,8 @@ from django.db import models
 class Complaint(models.Model):
     TARGETS = [("content", "Мэдээ"), ("pledge", "Амлалт"), ("indicator", "Статистик үзүүлэлт")]
     KINDS = [("wrong", "Буруу мэдээлэл"), ("duplicate", "Хуулбар"), ("copyright", "Зохиогчийн эрх"),
-             ("privacy", "Хувийн мэдээлэл"), ("other", "Бусад")]
+             ("privacy", "Хувийн мэдээлэл"), ("defamation", "Гүтгэлэг, нэр төр"), ("minor", "Хүүхдийн эрх"),
+             ("reply", "Хариу тайлбар өгөх хүсэлт"), ("other", "Бусад")]
     STATUSES = [("open", "Нээлттэй"), ("resolved", "Шийдвэрлэсэн"), ("dismissed", "Хүлээн аваагүй")]
     reporter = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="complaints")
     target_type = models.CharField(max_length=10, choices=TARGETS)

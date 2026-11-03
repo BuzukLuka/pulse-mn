@@ -40,6 +40,14 @@ class ReviewViewSet(viewsets.ReadOnlyModelViewSet):
                               request.data.get("checklist"))
         return Response(self.get_serializer(obj).data)
 
+    @action(detail=True, methods=["post"])
+    def corrections(self, request, pk=None):
+        """Залруулга / хариу тайлбар нийтлэх."""
+        from apps.content.serializers import CorrectionSerializer
+        c = services.add_correction(self.get_object(), request.user, str(request.data.get("kind", "correction")),
+                                    str(request.data.get("text", "")))
+        return Response(CorrectionSerializer(c).data, status=201)
+
     @action(detail=True, methods=["post"], url_path="ai-check")
     def ai_check(self, request, pk=None):
         """Gemini-аар мэдээг хянуулах (редакторт туслах санал, шийдвэр биш)."""

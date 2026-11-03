@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "apps.statistics",
     "apps.complaints",
     "apps.newsroom",
+    "apps.worldnews",
 ]
 
 MIDDLEWARE = [

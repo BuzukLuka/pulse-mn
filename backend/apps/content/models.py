@@ -51,6 +51,9 @@ class Content(models.Model):
     newsroom = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
                                  related_name="newsroom_contents")
     price = models.PositiveIntegerField(default=0, help_text="Редакцад худалдах үнэ (₮). 0 бол зарахгүй.")
+    # Сэтгүүлчийн хууль ёсны мэдэгдэл (илгээхэд заавал): баримт, гүтгэлэггүй, хувийн мэдээлэл, хүүхэд,
+    # ашиг сонирхлын зөрчил, ивээн тэтгэсэн / улс төрийн сурталчилгаа. Шалгалт: services.compliance_problems
+    compliance = models.JSONField(default=dict, blank=True)
     title = models.CharField(max_length=250)
     body = models.TextField(blank=True)
     category = models.ForeignKey("catalog.Category", null=True, blank=True, on_delete=models.PROTECT)
@@ -98,6 +101,19 @@ class Media(models.Model):
     sha256 = models.CharField(max_length=64, db_index=True)  # яг ижил файл
     phash = models.CharField(max_length=16, blank=True, db_index=True)  # төстэй зураг (dHash)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class Correction(models.Model):
+    """Нийтлэгдсэн мэдээний залруулга, хариу тайлбар (хариу өгөх эрх), шинэчлэл — нийтэд ил харагдана."""
+    KINDS = [("correction", "Залруулга"), ("reply", "Хариу тайлбар"), ("update", "Шинэчлэл")]
+    content = models.ForeignKey(Content, on_delete=models.CASCADE, related_name="corrections")
+    kind = models.CharField(max_length=12, choices=KINDS, default="correction")
+    text = models.TextField()
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL, related_name="+")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
 
 
 class ContentVersion(models.Model):
