@@ -69,6 +69,7 @@ def compliance_problems(c):
 def submit(content, actor):
     if not content.can_transition(Status.UNDER_REVIEW):
         raise Conflict(f"'{content.get_status_display()}' төлөвтэй контентыг илгээх боломжгүй.")
+    content.review_by = review_route(content)
     if not content.author.is_verified:
         raise Unprocessable("Зөвхөн баталгаажсан сэтгүүлч мэдээ илгээнэ. Профайлаас баталгаажуулалтын хүсэлт илгээнэ үү.")
     errors = validate_for_submit(content)
@@ -83,16 +84,20 @@ def submit(content, actor):
     except Exception:  # noqa: BLE001 — шалгалт унавал илгээлтийг хаахгүй
         import logging
         logging.getLogger(__name__).exception("precheck failed")
-    content.save(update_fields=["status", "submitted_at", "verification", "updated_at"])
+    content.save(update_fields=["status", "submitted_at", "verification", "review_by", "updated_at"])
     number = (content.versions.order_by("-number").values_list("number", flat=True).first() or 0) + 1
     ContentVersion.objects.create(content=content, number=number, title=content.title, body=content.body,
                                   source=content.source, tags=content.tags)
     audit.log(actor, "content.submit", "content", content.pk, {"status": before},
               {"status": content.status})
-    notify_editors("Шинэ контент шалгалтад ирлээ", content.title, content.pk)
-    if content.newsroom_id:
-        notify(content.newsroom, "Танай сэтгүүлч шинэ мэдээ илгээлээ",
+    if content.review_by == "newsroom":
+        notify(content.newsroom, "Шалгах мэдээ ирлээ — танай редакц шийдвэр гаргана",
                f"{content.author.full_name or content.author.email}: {content.title}", content.pk)
+    else:
+        notify_editors("Шинэ контент шалгалтад ирлээ", content.title, content.pk)
+        if content.newsroom_id:
+            notify(content.newsroom, "Танай сэтгүүлч шинэ мэдээ илгээлээ",
+                   f"{content.author.full_name or content.author.email}: {content.title}", content.pk)
     return content
 
 
@@ -176,15 +181,27 @@ def decide(content, editor, decision, reason="", checklist=None):
                 content.title, content.body)["summary"]
     if new_status == Status.PUBLISHED and content.verification:
         content.verification = {**content.verification, "editor_verified": True,
-                                "verified_at": timezone.now().isoformat()}
+                                "verified_at": timezone.now().isoformat(),
+                                "verified_by": editor.full_name or editor.organization or "Pulse.mn редактор",
+                                "verified_by_newsroom": content.review_by == "newsroom"}
     content.save()
     audit.log(editor, f"content.{decision}", "content", content.pk, {"status": before},
               {"status": new_status}, reason)
     notify(content.author, f"Таны контент: {content.get_status_display()}",
            reason or content.title, content.pk)
-    if content.newsroom_id:
+    if content.newsroom_id and content.newsroom_id != editor.pk:
         notify(content.newsroom, f"Редакторын шийдвэр: {content.get_status_display()}", content.title, content.pk)
     return content
+
+
+def review_route(content):
+    """Баталгаажсан редакцын идэвхтэй гишүүн тухайн редакцаараа илгээсэн бол редакц өөрөө шалгана."""
+    from apps.newsroom.models import Membership
+    nr = content.newsroom
+    if nr and nr.is_verified and nr.is_active and Membership.objects.filter(
+            newsroom=nr, journalist_id=content.author_id, status="active").exists():
+        return "newsroom"
+    return "pulse"
 
 
 @transaction.atomic

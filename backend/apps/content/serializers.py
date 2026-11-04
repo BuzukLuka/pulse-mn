@@ -43,11 +43,11 @@ class ContentSerializer(serializers.ModelSerializer):
             "review_reason", "reviewed_at", "submitted_at", "published_at", "created_at",
             "updated_at", "author", "author_name", "media", "content_type", "event_time",
             "location_detail", "license", "copyright_declared", "verification", "review_checklist",
-            "pledges", "pledge_items", "newsroom", "newsroom_name", "price", "compliance", "corrections",
+            "pledges", "pledge_items", "newsroom", "newsroom_name", "price", "compliance", "corrections", "review_by",
         ]
         read_only_fields = ["status", "review_reason", "reviewed_at", "submitted_at", "published_at",
                             "ai_summary", "ai_suggestion", "ai_review", "author", "verification",
-                            "review_checklist"]
+                            "review_checklist", "review_by"]
 
     def get_pledge_items(self, obj):
         return [{"id": p.pk, "text": p.text[:140], "politician": p.politician.name, "politician_id": p.politician_id}
@@ -118,7 +118,8 @@ class PublicContentSerializer(ContentSerializer):
                            if c["key"] in ("source", "media", "duplicate", "claims")],
                 "claims": next(([{k: i[k] for k in ("indicator", "unit", "claimed", "official", "year", "source", "mismatch")}
                                  for i in c.get("items", [])] for c in v.get("checks", []) if c["key"] == "claims"), []),
-                "verified_at": v.get("verified_at")}
+                "verified_at": v.get("verified_at"), "verified_by": v.get("verified_by"),
+                "verified_by_newsroom": bool(v.get("verified_by_newsroom"))}
 
 
 class VersionSerializer(serializers.ModelSerializer):

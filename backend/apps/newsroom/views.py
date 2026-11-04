@@ -1,4 +1,5 @@
 from django.db.models import Count
+from django.http import Http404
 from rest_framework import generics, permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -104,6 +105,56 @@ class NewsroomDashboardViewSet(viewsets.ViewSet):
     def decide(self, request, mid=None):
         m = generics.get_object_or_404(Membership, pk=mid, newsroom=request.user)
         return Response(membership_json(services.decide_membership(request.user, m, bool(request.data.get("approve")))))
+
+    def _own(self, request, cid):
+        return generics.get_object_or_404(Content.objects.select_related("author", "category", "province", "district")
+                                          .prefetch_related("media"), pk=cid, newsroom=request.user)
+
+    @action(detail=False, methods=["get"], url_path=r"content/(?P<cid>\d+)")
+    def content_detail(self, request, cid=None):
+        """Шалгах дэлгэц: агуулга, давхардал, шалгах жагсаалт, хувилбар (Pulse-ийн редактортой ижил)."""
+        from apps.content import services as cs
+        from apps.content.serializers import VersionSerializer
+        obj = self._own(request, cid)
+        if obj.status == Status.DRAFT:
+            raise Http404
+        data = ContentSerializer(obj, context={"request": request}).data
+        data["duplicates"] = cs.find_duplicates(obj)
+        data["checklist_items"] = [{"key": k, "label": l, "required": r} for k, l, r in cs.CHECKLIST]
+        data["versions"] = VersionSerializer(obj.versions.all(), many=True).data
+        data["can_decide"] = obj.review_by == "newsroom"
+        return Response(data)
+
+    @action(detail=False, methods=["post"], url_path=r"content/(?P<cid>\d+)/decide")
+    def content_decide(self, request, cid=None):
+        from apps.common.exceptions import Conflict
+        from apps.content import services as cs
+        obj = self._own(request, cid)
+        if obj.review_by != "newsroom":
+            raise Conflict("Энэ мэдээг Pulse.mn-ийн редактор шалгана (бие даасан эсвэл гишүүн бус сэтгүүлч).")
+        obj = cs.decide(obj, request.user, str(request.data.get("decision", "")), str(request.data.get("reason", "")),
+                        request.data.get("checklist"))
+        return Response(ContentSerializer(obj, context={"request": request}).data)
+
+    @action(detail=False, methods=["post"], url_path=r"content/(?P<cid>\d+)/ai-check")
+    def content_ai_check(self, request, cid=None):
+        from apps.ai.checks import run_checks
+        obj = self._own(request, cid)
+        result = run_checks(obj, use_ai=True)
+        obj.verification = {**result, "editor_verified": (obj.verification or {}).get("editor_verified", False)}
+        obj.save(update_fields=["verification", "ai_review", "embedding", "updated_at"])
+        return Response({**result, **(obj.ai_review or {}), "trust": result})
+
+    @action(detail=False, methods=["post"], url_path=r"content/(?P<cid>\d+)/corrections")
+    def content_corrections(self, request, cid=None):
+        from apps.common.exceptions import Conflict
+        from apps.content import services as cs
+        from apps.content.serializers import CorrectionSerializer
+        obj = self._own(request, cid)
+        if obj.review_by != "newsroom":
+            raise Conflict("Залруулгыг Pulse.mn-ийн редактор нийтэлнэ.")
+        c = cs.add_correction(obj, request.user, str(request.data.get("kind", "correction")), str(request.data.get("text", "")))
+        return Response(CorrectionSerializer(c).data, status=201)
 
     @action(detail=False, methods=["get"])
     def content(self, request):

@@ -17,6 +17,8 @@ class ReviewViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         qs = Content.objects.exclude(status=Status.DRAFT).select_related(
             "category", "province", "district", "author").prefetch_related("media")
+        if self.request.user.role != "admin":
+            qs = qs.exclude(review_by="newsroom")
         if self.action == "list":  # төлвийн шүүлтүүр зөвхөн жагсаалтад
             st = self.request.query_params.get("status", Status.UNDER_REVIEW)
             if st != "all":
@@ -34,7 +36,11 @@ class ReviewViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=True, methods=["post"])
     def decide(self, request, pk=None):
-        obj = services.decide(self.get_object(), request.user,
+        obj = self.get_object()
+        if obj.review_by == "newsroom":
+            from apps.common.exceptions import Conflict
+            raise Conflict("Энэ мэдээг редакц өөрөө шалгаж нийтэлнэ. Pulse.mn нийтэлсний дараах хяналт хийнэ.")
+        obj = services.decide(obj, request.user,
                               str(request.data.get("decision", "")),
                               str(request.data.get("reason", "")),
                               request.data.get("checklist"))

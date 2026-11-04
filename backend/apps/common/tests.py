@@ -455,3 +455,78 @@ class WorldNewsTests(Base):
             self.login(self.admin)
             self.assertEqual(self.client.post("/api/v1/world-news/refresh/").status_code, 200)
         self.assertEqual(len(self.client.get("/api/v1/world-news/sources/").data["sources"]), 8)
+
+
+# ---------- Редакц өөрөө шалгаж нийтлэх ----------
+class NewsroomReviewTests(Base):
+    def setUp(self):
+        from apps.newsroom.models import Membership
+        Membership.objects.create(newsroom=self.nr, journalist=self.j, status="active")
+
+    def send(self, author, newsroom):
+        self.login(author)
+        cid = self.client.post("/api/v1/content/", self.payload(newsroom=newsroom.pk if newsroom else None), format="json").data["id"]
+        self.assertEqual(self.client.post(f"/api/v1/content/{cid}/submit/").status_code, 200)
+        return Content.objects.get(pk=cid)
+
+    def test_member_news_routed_to_verified_newsroom(self):
+        c = self.send(self.j, self.nr)
+        self.assertEqual(c.review_by, "newsroom")
+        self.assertTrue(Notification.objects.filter(user=self.nr, title__contains="шийдвэр гаргана").exists())
+        self.assertFalse(Notification.objects.filter(user=self.editor, content_id=c.pk).exists())
+        # Pulse-ийн редакторын жагсаалтад харагдахгүй, шийдвэр гаргах боломжгүй
+        self.login(self.editor)
+        self.assertNotIn(c.pk, [x["id"] for x in self.client.get("/api/v1/review/").data["results"]])
+        self.assertEqual(self.client.get(f"/api/v1/review/{c.pk}/").status_code, 404)
+        self.login(self.admin)  # админ хяналтаар харна, гэхдээ шийдвэр редакцынх
+        self.assertEqual(self.client.get(f"/api/v1/review/{c.pk}/").status_code, 200)
+        self.assertEqual(self.client.post(f"/api/v1/review/{c.pk}/decide/", {"decision": "approve", "checklist": ALL_CHECKS},
+                                          format="json").status_code, 409)
+
+    def test_newsroom_decides_with_legal_checklist(self):
+        c = self.send(self.j, self.nr)
+        self.login(self.nr)
+        d = self.client.get(f"/api/v1/newsroom/content/{c.pk}/").data
+        self.assertTrue(d["can_decide"])
+        self.assertTrue(any(i["key"] == "defamation" for i in d["checklist_items"]))
+        url = f"/api/v1/newsroom/content/{c.pk}/decide/"
+        self.assertEqual(self.client.post(url, {"decision": "approve", "checklist": {"facts": True}}, format="json").status_code, 422)
+        r = self.client.post(url, {"decision": "approve", "checklist": ALL_CHECKS}, format="json")
+        self.assertEqual(r.data["status"], "published")
+        self.assertTrue(Notification.objects.filter(user=self.j, content_id=c.pk, title__contains="Нийтлэгдсэн").exists())
+        trust = self.client.get(f"/api/v1/news/{c.pk}/").data["trust"]
+        self.assertTrue(trust["editor_verified"] and trust["verified_by_newsroom"])
+        self.assertEqual(trust["verified_by"], "Редакц")
+        r = self.client.post(f"/api/v1/newsroom/content/{c.pk}/corrections/", {"kind": "update", "text": "Шинэ мэдээлэл нэмэгдлээ."},
+                             format="json")
+        self.assertEqual(r.status_code, 201)
+
+    def test_return_and_resubmit_stays_with_newsroom(self):
+        c = self.send(self.j, self.nr)
+        self.login(self.nr)
+        self.client.post(f"/api/v1/newsroom/content/{c.pk}/decide/", {"decision": "return", "reason": "Эх сурвалж нэм"}, format="json")
+        self.login(self.j)
+        self.assertEqual(self.client.post(f"/api/v1/content/{c.pk}/submit/").status_code, 200)
+        self.assertEqual(Content.objects.get(pk=c.pk).review_by, "newsroom")
+
+    def test_non_member_or_unverified_newsroom_goes_to_pulse(self):
+        c = self.send(self.j2, self.nr)                 # гишүүн бус
+        self.assertEqual(c.review_by, "pulse")
+        User.objects.filter(pk=self.nr.pk).update(is_verified=False)
+        c2 = self.send(self.j, self.nr)                 # баталгаажаагүй редакц
+        self.assertEqual(c2.review_by, "pulse")
+        c3 = self.send(self.j, None)                    # бие даасан
+        self.assertEqual(c3.review_by, "pulse")
+        self.login(self.nr)
+        self.assertEqual(self.client.post(f"/api/v1/newsroom/content/{c.pk}/decide/", {"decision": "approve", "checklist": ALL_CHECKS},
+                                          format="json").status_code, 409)
+        self.assertFalse(self.client.get(f"/api/v1/newsroom/content/{c.pk}/").data["can_decide"])
+
+    def test_other_newsroom_cannot_access(self):
+        c = self.send(self.j, self.nr)
+        self.login(self.nr2)
+        self.assertEqual(self.client.get(f"/api/v1/newsroom/content/{c.pk}/").status_code, 404)
+        self.assertEqual(self.client.post(f"/api/v1/newsroom/content/{c.pk}/decide/", {"decision": "reject", "reason": "x"},
+                                          format="json").status_code, 404)
+        self.login(self.j)
+        self.assertEqual(self.client.get(f"/api/v1/newsroom/content/{c.pk}/").status_code, 403)

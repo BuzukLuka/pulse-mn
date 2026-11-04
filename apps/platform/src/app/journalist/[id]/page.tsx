@@ -30,7 +30,8 @@ function Inner() {
       {sent && <Alert tone="ok">Амжилттай илгээгдлээ. Таны контент редакторын шалгалтад орлоо.</Alert>}
       {c.status === "changes_requested" && <Alert>Редакторын тайлбар: <b>{c.review_reason}</b> — засаад дахин илгээнэ үү.</Alert>}
       {c.status === "rejected" && <Alert>Татгалзсан. Шалтгаан: <b>{c.review_reason}</b></Alert>}
-      {c.status === "under_review" && <Alert tone="info">Шалгалтад байна. Илгээсэн: {fmtDateTime(c.submitted_at)}</Alert>}
+      {c.status === "under_review" && <Alert tone="info">Шалгалтад байна. Илгээсэн: {fmtDateTime(c.submitted_at)} ·
+        Шалгагч: <b>{c.review_by === "newsroom" ? `«${c.newsroom_name}» редакц` : "Pulse.mn редактор"}</b></Alert>}
       {c.status === "published" && <Alert tone="ok">Нийтлэгдсэн ({fmtDate(c.published_at)}). <a href={`/news/${c.id}`}>Харах</a></Alert>}
       {c.newsroom_name && <p className="muted">🏢 Редакц: <b>{c.newsroom_name}</b> — шинэ төлөв бүрийн мэдэгдэл редакцад очно.</p>}
       {!editable && !c.newsroom && (

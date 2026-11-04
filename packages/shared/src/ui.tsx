@@ -172,6 +172,7 @@ export function TrustCard({ v, pub, detailed }: { v?: Verification | null; pub?:
   const score = v?.score ?? pub?.score ?? null;
   const level = v?.level ?? pub?.level ?? "medium";
   const verified = v?.editor_verified ?? pub?.editor_verified;
+  const by = pub?.verified_by_newsroom ? `Редакц «${pub.verified_by}» баталгаажуулсан ✓` : "Редактор баталгаажуулсан ✓";
   const checks = (v?.checks ?? pub?.checks ?? []) as { key?: string; label: string; status: keyof typeof CHECK_ICON; detail?: string; items?: any[] }[];
   if (score === null && !checks.length) return null;
   return (
@@ -179,7 +180,7 @@ export function TrustCard({ v, pub, detailed }: { v?: Verification | null; pub?:
       <div className="row spread">
         <div className="row">
           <div className={`score ${level}`} style={{ "--p": score ?? 0 } as CSSProperties}>{score ?? "—"}</div>
-          <div><b>Pulse Trust</b><div className="muted">{verified ? "Редактор баталгаажуулсан ✓" : "Урьдчилсан шалгалт"}{(v?.ai_used ?? pub?.ai_used) ? " · Gemini AI ашигласан" : ""}</div></div>
+          <div><b>Pulse Trust</b><div className="muted">{verified ? by : "Урьдчилсан шалгалт"}{(v?.ai_used ?? pub?.ai_used) ? " · Gemini AI ашигласан" : ""}</div></div>
         </div>
         {verified && <span className="badge green">Баталгаажсан</span>}
       </div>

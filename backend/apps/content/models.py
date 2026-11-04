@@ -54,6 +54,9 @@ class Content(models.Model):
     # Сэтгүүлчийн хууль ёсны мэдэгдэл (илгээхэд заавал): баримт, гүтгэлэггүй, хувийн мэдээлэл, хүүхэд,
     # ашиг сонирхлын зөрчил, ивээн тэтгэсэн / улс төрийн сурталчилгаа. Шалгалт: services.compliance_problems
     compliance = models.JSONField(default=dict, blank=True)
+    # Хэн шалгаж нийтлэх вэ: баталгаажсан редакцын гишүүн сэтгүүлч редакцаараа илгээвэл редакц өөрөө,
+    # бусад тохиолдолд Pulse.mn-ийн редактор. Илгээх үед тогтоогдоно (services.review_route).
+    review_by = models.CharField(max_length=10, default="pulse", db_index=True)
     title = models.CharField(max_length=250)
     body = models.TextField(blank=True)
     category = models.ForeignKey("catalog.Category", null=True, blank=True, on_delete=models.PROTECT)

@@ -25,7 +25,10 @@ function ContentTab() {
             <div className="muted">✍️ {c.author_name} · {c.province_name} · илгээсэн {fmtDate(c.submitted_at)}</div>
             {c.review_reason && <div className="muted">Редакторын тайлбар: {c.review_reason}</div>}
           </div>
-          <div className="row">{c.verification?.score != null && <span className="badge blue">Trust {c.verification.score}</span>}<StatusBadge status={c.status} /></div>
+          <div className="row">{c.verification?.score != null && <span className="badge blue">Trust {c.verification.score}</span>}<StatusBadge status={c.status} />
+            {c.review_by === "newsroom"
+              ? <a className={`btn sm ${c.status === "under_review" ? "" : "secondary"}`} href={`/newsroom/review/${c.id}`}>{c.status === "under_review" ? "Шалгах →" : "Нээх"}</a>
+              : <span className="badge gray" title="Гишүүн бус эсвэл баталгаажаагүй үед Pulse.mn шалгана">Pulse шалгана</span>}</div>
         </div>
       ))}
     </>
@@ -97,7 +100,9 @@ export default function NewsroomDashboard() {
           <div className="card kpi-card"><div className="ico">💳</div><div className="muted">Худалдан авсан</div><div className="stat">{s.purchases}</div><small className="muted">ДЕМО төлбөр</small></div>
         </div>
       )}
-      <Tabs tabs={[["content", "Ирсэн мэдээ"], ["members", `Сэтгүүлчид${s?.pending ? ` (${s.pending})` : ""}`], ["purchases", "Худалдан авалт"]]} value={tab} onChange={setTab} />
+      <div className="alert info">Танай <b>баталгаажсан</b> редакцын <b>гишүүн</b> сэтгүүлчид редакцаараа илгээсэн мэдээг та өөрөө шалгаж нийтэлнэ
+        («Шалгах →»). Хариуцлагыг хуулийн этгээд, хариуцлагатай эрхлэгч хүлээнэ. Pulse.mn нийтэлсний дараах хяналт (гомдол, залруулга, хууль зүйн нуулт) хийнэ.</div>
+      <Tabs tabs={[["content", `Ирсэн мэдээ${s?.content.under_review ? ` (${s.content.under_review})` : ""}`], ["members", `Сэтгүүлчид${s?.pending ? ` (${s.pending})` : ""}`], ["purchases", "Худалдан авалт"]]} value={tab} onChange={setTab} />
       {tab === "content" && <ContentTab />}
       {tab === "members" && <MembersTab onChange={loadSummary} />}
       {tab === "purchases" && <PurchasesTab />}

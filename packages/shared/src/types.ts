@@ -41,6 +41,7 @@ export interface Verification {
 export interface PublicTrust {
   editor_verified: boolean; score: number | null; level: string | null; ai_used: boolean;
   checks: { label: string; status: CheckStatus }[]; verified_at?: string | null;
+  verified_by?: string | null; verified_by_newsroom?: boolean;
   claims: { indicator: string; unit: string; claimed: number; official: number; year: number; source: string; mismatch: boolean }[];
 }
 export interface ContentVersion { id: number; number: number; title: string; body: string; source: string; tags: string[]; created_at: string }
@@ -51,7 +52,7 @@ export interface Content {
   pledge_items?: { id: number; text: string; politician: string; politician_id: number }[];
   versions?: ContentVersion[]; checklist_items?: { key: string; label: string; required: boolean }[];
   newsroom?: number | null; newsroom_name?: string | null; price?: number;
-  compliance?: Compliance; corrections?: Correction[];
+  compliance?: Compliance; corrections?: Correction[]; review_by?: "pulse" | "newsroom"; can_decide?: boolean;
   disclosure?: { sponsored: boolean; political_ad: boolean; sponsor_name: string; conflict_of_interest: string };
   id: number; title: string; body: string;
   category: number | null; category_name: string | null; category_slug: string | null;
