@@ -1,0 +1,1547 @@
+{
+ "requirements": [
+  {
+   "no": 1,
+   "type": "Functional",
+   "name": "Хэрэглэгч бүртгэл",
+   "detail": "Сэтгүүлч, редакц (байгууллага), иргэн бүртгүүлж нэвтэрнэ; редактор, админыг эрх бүхий этгээд үүсгэнэ.",
+   "function": "Бүртгэл, нэвтрэх (JWT)",
+   "actor": "Бүх хэрэглэгч",
+   "priority": "Өндөр",
+   "status": "Хэрэгжсэн",
+   "impl": "accounts: /auth/register, /auth/login"
+  },
+  {
+   "no": 2,
+   "type": "Functional",
+   "name": "Хэрэглэгчийн эрх",
+   "detail": "Сэтгүүлч, редактор (Pulse.mn ба редакцын), редакц, иргэн, админ гэсэн үүргээр хандалт хязгаарлагдана.",
+   "function": "Role-based access",
+   "actor": "Админ",
+   "priority": "Өндөр",
+   "status": "Хэрэгжсэн",
+   "impl": "common/permissions.roles, UC-03"
+  },
+  {
+   "no": 3,
+   "type": "Functional",
+   "name": "Сэтгүүлчийн профайл",
+   "detail": "Танилцуулга, туршлага, портфолио, нууцлалын тохиргоо, гол сэдвүүд, үнэлгээ.",
+   "function": "Profile, Portfolio",
+   "actor": "Сэтгүүлч",
+   "priority": "Дунд",
+   "status": "Хэрэгжсэн",
+   "impl": "/profile, /journalists/[id]"
+  },
+  {
+   "no": 4,
+   "type": "Functional",
+   "name": "Мэдээ оруулах",
+   "detail": "Мэдээ, нийтлэл, зураг, видео, баримт оруулж Vercel Blob-д хадгална.",
+   "function": "Upload content",
+   "actor": "Сэтгүүлч",
+   "priority": "Өндөр",
+   "status": "Хэрэгжсэн",
+   "impl": "UC-01, content.Media, VercelBlobStorage"
+  },
+  {
+   "no": 5,
+   "type": "Functional",
+   "name": "Мэдээ ангилах",
+   "detail": "Төрөл, сэдэв, аймаг, сум, байршил, түлхүүр үгээр ангилна.",
+   "function": "Category, Location, Tag",
+   "actor": "Сэтгүүлч / Систем",
+   "priority": "Өндөр",
+   "status": "Хэрэгжсэн",
+   "impl": "ContentForm"
+  },
+  {
+   "no": 6,
+   "type": "Functional",
+   "name": "AI Tagging",
+   "detail": "Gemini (эсвэл дүрэм) ангилал, түлхүүр үг, хураангуй санал болгоно; сэтгүүлч батална.",
+   "function": "AI Tagging",
+   "actor": "Систем",
+   "priority": "Дунд",
+   "status": "Хэрэгжсэн",
+   "impl": "POST /content/suggest-tags"
+  },
+  {
+   "no": 7,
+   "type": "Functional",
+   "name": "Мэдээ баталгаажуулах",
+   "detail": "Pulse Trust: эх сурвалж, давхардал, төстэй зураг, хувийн мэдээлэл, албан ёсны статистиктай тулгалт.",
+   "function": "Verification",
+   "actor": "Систем / Редактор",
+   "priority": "Өндөр",
+   "status": "Хэрэгжсэн",
+   "impl": "ai/checks.run_checks"
+  },
+  {
+   "no": 8,
+   "type": "Functional",
+   "name": "Мэдээ модераци",
+   "detail": "Зөвшөөрөх, засварт буцаах (шалтгаантай), татгалзах (шалтгаантай).",
+   "function": "Approve, Reject, Request Changes",
+   "actor": "Редактор",
+   "priority": "Өндөр",
+   "status": "Хэрэгжсэн",
+   "impl": "UC-02 decide"
+  },
+  {
+   "no": 9,
+   "type": "Functional",
+   "name": "Редакторын хяналт",
+   "detail": "Бие даасан сэтгүүлчийн мэдээг Pulse.mn-ийн редактор, редакцын гишүүнийхийг тухайн редакцын редактор шалгаж нийтэлнэ.",
+   "function": "Review, Publish",
+   "actor": "Редактор / Редакцын редактор",
+   "priority": "Өндөр",
+   "status": "Хэрэгжсэн",
+   "impl": "UC-04, Content.review_by"
+  },
+  {
+   "no": 10,
+   "type": "Functional",
+   "name": "Мэдээ хайх",
+   "detail": "Түлхүүр үг, ангилал, аймаг, огноогоор хайж шүүнэ.",
+   "function": "Search, Filter",
+   "actor": "Бүх хэрэглэгч",
+   "priority": "Өндөр",
+   "status": "Хэрэгжсэн",
+   "impl": "GET /news"
+  },
+  {
+   "no": 11,
+   "type": "Functional",
+   "name": "Мэдээ ашиглах хүсэлт",
+   "detail": "Редакц нийтлэгдсэн мэдээний энгийн эсвэл онцгой лиценз худалдан авна.",
+   "function": "Content license purchase",
+   "actor": "Редакц",
+   "priority": "Өндөр",
+   "status": "ДЕМО",
+   "impl": "UC-05, Purchase"
+  },
+  {
+   "no": 12,
+   "type": "Functional",
+   "name": "Хүсэлтийн зөвшөөрөл",
+   "detail": "Сэтгүүлч үнэ, лицензийн нөхцөлөө урьдчилан тогтооно; худалдан авалт нөхцөлөөр автоматаар зөвшөөрөгдөнө (тус бүрээр батлах урсгал төлөвлөгөөнд).",
+   "function": "Price, License",
+   "actor": "Сэтгүүлч",
+   "priority": "Өндөр",
+   "status": "Хэсэгчлэн",
+   "impl": "Content.price, license"
+  },
+  {
+   "no": 13,
+   "type": "Functional",
+   "name": "Хүсэлтийн төлөв",
+   "detail": "Хүлээгдэж буй, төлөгдсөн, цуцалсан, буцаасан.",
+   "function": "Request Status",
+   "actor": "Сэтгүүлч / Редакц",
+   "priority": "Дунд",
+   "status": "Хэрэгжсэн",
+   "impl": "Purchase.status"
+  },
+  {
+   "no": 14,
+   "type": "Functional",
+   "name": "Иргэдийн мэдээлэл",
+   "detail": "Иргэд орон нутгийн асуудлыг зураг, байршилтай мэдээлнэ (одоогоор гомдол, санал хэлбэрээр).",
+   "function": "Report Form",
+   "actor": "Иргэн",
+   "priority": "Өндөр",
+   "status": "Хэсэгчлэн",
+   "impl": "complaints; иргэний мэдээллийн маягт төлөвлөгөөнд"
+  },
+  {
+   "no": 15,
+   "type": "Functional",
+   "name": "Газрын зураг",
+   "detail": "Мэдээ, иргэдийн мэдээллийг газрын зураг дээр харуулна.",
+   "function": "Map, Geolocation",
+   "actor": "Иргэн / Систем",
+   "priority": "Дунд",
+   "status": "Төлөвлөгөө",
+   "impl": "—"
+  },
+  {
+   "no": 16,
+   "type": "Functional",
+   "name": "Улс төрчийн амлалт бүртгэх",
+   "detail": "Амлалтыг эх сурвалжийн хамт бүртгэнэ.",
+   "function": "Promise Record",
+   "actor": "Админ / Дата баг",
+   "priority": "Өндөр",
+   "status": "Хэрэгжсэн",
+   "impl": "pledges"
+  },
+  {
+   "no": 17,
+   "type": "Functional",
+   "name": "Амлалтын хэрэгжилт хянах",
+   "detail": "Төлөв, нотлох баримт, биелэлтийн хувь, харьцуулалт.",
+   "function": "Status, Evidence",
+   "actor": "Админ / Дата баг",
+   "priority": "Өндөр",
+   "status": "Хэрэгжсэн",
+   "impl": "/pledges"
+  },
+  {
+   "no": 18,
+   "type": "Functional",
+   "name": "Амлалтын түүх",
+   "detail": "Төлөв хэзээ, хэн, ямар шалтгаанаар өөрчлөгдсөнийг хадгална.",
+   "function": "Audit Trail",
+   "actor": "Систем",
+   "priority": "Өндөр",
+   "status": "Хэрэгжсэн",
+   "impl": "PledgeStatusHistory"
+  },
+  {
+   "no": 19,
+   "type": "Functional",
+   "name": "Эх сурвалж хадгалах",
+   "detail": "Мэдээ, амлалт, статистик бүрийн эх сурвалж.",
+   "function": "Source Citation",
+   "actor": "Сэтгүүлч / Редактор",
+   "priority": "Өндөр",
+   "status": "Хэрэгжсэн",
+   "impl": "Content.source, DataSource"
+  },
+  {
+   "no": 20,
+   "type": "Functional",
+   "name": "Гомдол гаргах",
+   "detail": "Буруу мэдээлэл, хуулбар, зохиогчийн эрх, хувийн мэдээлэл, гүтгэлэг, хүүхдийн эрх, хариу тайлбарын хүсэлт.",
+   "function": "Report",
+   "actor": "Бүх хэрэглэгч",
+   "priority": "Дунд",
+   "status": "Хэрэгжсэн",
+   "impl": "complaints"
+  },
+  {
+   "no": 21,
+   "type": "Functional",
+   "name": "Залруулга хийх",
+   "detail": "Залруулга, хариу тайлбар, шинэчлэлийг мэдээн дээр ил нийтэлнэ.",
+   "function": "Correction System",
+   "actor": "Редактор",
+   "priority": "Дунд",
+   "status": "Хэрэгжсэн",
+   "impl": "content.Correction"
+  },
+  {
+   "no": 22,
+   "type": "Functional",
+   "name": "Зохиогчийн эрх",
+   "detail": "Зохиогчийн эрхийн мэдэгдэл, ашиглах лиценз.",
+   "function": "Copyright, License",
+   "actor": "Сэтгүүлч / Систем",
+   "priority": "Өндөр",
+   "status": "Хэрэгжсэн",
+   "impl": "Content.copyright_declared, license"
+  },
+  {
+   "no": 23,
+   "type": "Functional",
+   "name": "Цахим гэрээ",
+   "detail": "Бүртгэл, худалдан авалтын нөхцөлийг цахимаар зөвшөөрч огноог хадгална (тусдаа гарын үсэгтэй гэрээ төлөвлөгөөнд).",
+   "function": "E-Contract",
+   "actor": "Сэтгүүлч / Редакц",
+   "priority": "Дунд",
+   "status": "Хэсэгчлэн",
+   "impl": "terms_accepted_at, Purchase.terms_accepted_at"
+  },
+  {
+   "no": 24,
+   "type": "Non-functional",
+   "name": "Мэдээллийн аюулгүй байдал",
+   "detail": "Нууц үгийн hash, JWT + токен хүчингүй болгох, үүрэгт суурилсан эрх, HTTPS, нөөцлөлт.",
+   "function": "Encryption, Access Control, Backup",
+   "actor": "Админ / Систем",
+   "priority": "Өндөр",
+   "status": "Хэрэгжсэн",
+   "impl": "NFR-003/004"
+  },
+  {
+   "no": 25,
+   "type": "Non-functional",
+   "name": "Хувийн мэдээллийн хамгаалалт",
+   "detail": "Зөвшөөрлөөр цуглуулж, мэдээлэл татах, бүртгэл устгах (нууцлах) эрхийг хангана.",
+   "function": "Privacy Policy, Consent",
+   "actor": "Систем / Админ",
+   "priority": "Өндөр",
+   "status": "Хэрэгжсэн",
+   "impl": "/auth/me/export, /auth/me/delete"
+  },
+  {
+   "no": 26,
+   "type": "Non-functional",
+   "name": "Audit Log",
+   "detail": "Чухал үйлдлийн хэн, хэзээ, юу, өмнөх/шинэ утга.",
+   "function": "Action Log",
+   "actor": "Систем",
+   "priority": "Өндөр",
+   "status": "Хэрэгжсэн",
+   "impl": "audit.AuditLog"
+  },
+  {
+   "no": 27,
+   "type": "Non-functional",
+   "name": "Системийн найдвартай ажиллагаа",
+   "detail": "Нэг эх сурвалж унахад бусад нь ажиллах, нөөцлөлт, алдааны боловсруулалт.",
+   "function": "Backup, Recovery, Error Handling",
+   "actor": "Систем",
+   "priority": "Өндөр",
+   "status": "Хэрэгжсэн",
+   "impl": "/admin/backup, fallback"
+  },
+  {
+   "no": 28,
+   "type": "Non-functional",
+   "name": "Хэрэглэхэд хялбар байдал",
+   "detail": "Цагаан минимал, responsive, persona бүрийн самбар.",
+   "function": "Энгийн UI",
+   "actor": "Бүх хэрэглэгч",
+   "priority": "Өндөр",
+   "status": "Хэрэгжсэн",
+   "impl": "shared/styles.css"
+  },
+  {
+   "no": 29,
+   "type": "Functional",
+   "name": "Редакц–сэтгүүлчийн гишүүнчлэл",
+   "detail": "Сэтгүүлч редакцад нэгдэх хүсэлт илгээж, редакц батална/татгалзана/хасна.",
+   "function": "Membership",
+   "actor": "Сэтгүүлч / Редакц",
+   "priority": "Өндөр",
+   "status": "Хэрэгжсэн",
+   "impl": "newsroom.Membership"
+  },
+  {
+   "no": 30,
+   "type": "Functional",
+   "name": "Редакцын редактор",
+   "detail": "Редакц өөрийн редакторын бүртгэлийг үүсгэж, хаана; тэд зөвхөн тухайн редакцын мэдээг шалгана.",
+   "function": "Staff editors",
+   "actor": "Редакц",
+   "priority": "Өндөр",
+   "status": "Хэрэгжсэн",
+   "impl": "User.newsroom_org"
+  },
+  {
+   "no": 31,
+   "type": "Functional",
+   "name": "Шалгалтын чиглүүлэлт",
+   "detail": "Баталгаажсан редакцын идэвхтэй гишүүн тухайн редакцаараа илгээвэл редакц, бусад үед Pulse.mn шалгана.",
+   "function": "Review routing",
+   "actor": "Систем",
+   "priority": "Өндөр",
+   "status": "Хэрэгжсэн",
+   "impl": "content.services.review_route"
+  },
+  {
+   "no": 32,
+   "type": "Functional",
+   "name": "Мэдэгдэл",
+   "detail": "Илгээлт, шийдвэр, гишүүнчлэл, худалдан авалт, залруулга, нуултын мэдэгдэл.",
+   "function": "Notifications",
+   "actor": "Бүх хэрэглэгч",
+   "priority": "Дунд",
+   "status": "Хэрэгжсэн",
+   "impl": "notifications"
+  },
+  {
+   "no": 33,
+   "type": "Functional",
+   "name": "Төлвийн түүх",
+   "detail": "Мэдээ хэзээ, хэн, ямар шийдвэр гаргасныг сэтгүүлчид харуулна.",
+   "function": "Status timeline",
+   "actor": "Сэтгүүлч",
+   "priority": "Дунд",
+   "status": "Хэрэгжсэн",
+   "impl": "/content/{id}/history"
+  },
+  {
+   "no": 34,
+   "type": "Functional",
+   "name": "Үнэлгээ ба AI санал",
+   "detail": "Сэтгүүлч, редакцад 1–5 үнэлгээ; үзүүлэлтэд суурилсан AI үнэлгээний санал.",
+   "function": "Rating, AI suggestion",
+   "actor": "Бүх хэрэглэгч",
+   "priority": "Дунд",
+   "status": "Хэрэгжсэн",
+   "impl": "newsroom.Rating, /ratings/suggest"
+  },
+  {
+   "no": 35,
+   "type": "Functional",
+   "name": "Сэтгүүлчийн гол сэдэв",
+   "detail": "Хамгийн их нийтэлдэг ангиллыг карт, профайлд харуулна.",
+   "function": "Topics",
+   "actor": "Систем",
+   "priority": "Бага",
+   "status": "Хэрэгжсэн",
+   "impl": "/journalists topics"
+  },
+  {
+   "no": 36,
+   "type": "Functional",
+   "name": "Дэлхийн мэдээ (AI)",
+   "detail": "RSS эх сурвалжаас Монголтой холбоотой мэдээг шүүж, ангилж, хураангуйлж, зурагтай сонины grid-д харуулна; 1212.mn API-г ҮСХ-ны зөвшөөрлөөр асаана.",
+   "function": "World news AI",
+   "actor": "Систем / Иргэн",
+   "priority": "Дунд",
+   "status": "Хэрэгжсэн",
+   "impl": "worldnews, /world"
+  },
+  {
+   "no": 37,
+   "type": "Functional",
+   "name": "Статистикийн самбар",
+   "detail": "Албан ёсны үзүүлэлт, динамик, аймгийн харьцуулалт, эх сурвалжийн удирдлага.",
+   "function": "Statistics",
+   "actor": "Иргэн / Админ",
+   "priority": "Дунд",
+   "status": "Хэрэгжсэн",
+   "impl": "statistics"
+  },
+  {
+   "no": 38,
+   "type": "Functional",
+   "name": "Төлбөр, татвар, баримт",
+   "detail": "НӨАТ 10%, платформын шимтгэл, сэтгүүлчийн цэвэр дүн, И-баримт; шлюз холбогдох хүртэл ДЕМО provider.",
+   "function": "Payment provider",
+   "actor": "Редакц / Админ",
+   "priority": "Өндөр",
+   "status": "ДЕМО",
+   "impl": "newsroom/payments.py"
+  },
+  {
+   "no": 39,
+   "type": "Legal",
+   "name": "Үйлчилгээний нөхцөл ба зөвшөөрөл",
+   "detail": "Бүртгэлд үйлчилгээний нөхцөл, хувийн мэдээлэл боловсруулах зөвшөөрөл заавал; огноог хадгална.",
+   "function": "Consent",
+   "actor": "Бүх хэрэглэгч",
+   "priority": "Өндөр",
+   "status": "Хэрэгжсэн",
+   "impl": "Хүний хувийн мэдээлэл хамгаалах тухай хууль"
+  },
+  {
+   "no": 40,
+   "type": "Legal",
+   "name": "Сэтгүүлчийн ёс зүйн дүрэм",
+   "detail": "Сэтгүүлч бүртгүүлэхдээ ёс зүйн дүрмийг хүлээн зөвшөөрнө.",
+   "function": "Code of ethics",
+   "actor": "Сэтгүүлч",
+   "priority": "Өндөр",
+   "status": "Хэрэгжсэн",
+   "impl": "Хэвлэл мэдээллийн зөвлөлийн ёс зүйн дүрэм"
+  },
+  {
+   "no": 41,
+   "type": "Legal",
+   "name": "Мэдээний хууль ёсны мэдэгдэл",
+   "detail": "Баримт шалгасан, гүтгэлэггүй, хувь хүний мэдээллийн үндэслэл, хүүхдийн хамгаалалт, ивээн тэтгэсэн/улс төрийн сурталчилгааны захиалагч, ашиг сонирхлын зөрчил.",
+   "function": "Compliance declaration",
+   "actor": "Сэтгүүлч",
+   "priority": "Өндөр",
+   "status": "Хэрэгжсэн",
+   "impl": "Хэвлэлийн эрх чөлөөний, Зөрчлийн, Хүүхдийн эрхийн, Зар сурталчилгааны, Сонгуулийн хууль"
+  },
+  {
+   "no": 42,
+   "type": "Legal",
+   "name": "Уншигчид ил тод тэмдэглэгээ",
+   "detail": "Ивээн тэтгэсэн, улс төрийн сурталчилгаа, ашиг сонирхлын мэдэгдлийг мэдээн дээр харуулна.",
+   "function": "Disclosure",
+   "actor": "Систем",
+   "priority": "Өндөр",
+   "status": "Хэрэгжсэн",
+   "impl": "Зар сурталчилгааны тухай хууль"
+  },
+  {
+   "no": 43,
+   "type": "Legal",
+   "name": "Редакторын хууль зүйн шалгах жагсаалт",
+   "detail": "Нийтлэхээс өмнө баримт, эх сурвалж, зохиогчийн эрх, хувийн мэдээлэл, гүтгэлэг, хүүхэд заавал шалгана.",
+   "function": "Legal checklist",
+   "actor": "Редактор",
+   "priority": "Өндөр",
+   "status": "Хэрэгжсэн",
+   "impl": "content.services.CHECKLIST"
+  },
+  {
+   "no": 44,
+   "type": "Legal",
+   "name": "Хариу тайлбар өгөх эрх",
+   "detail": "Шүүмжлэгдсэн этгээдийн хариу тайлбарыг гомдлоор хүлээн авч мэдээн дээр нийтэлнэ.",
+   "function": "Right of reply",
+   "actor": "Иргэн / Админ",
+   "priority": "Өндөр",
+   "status": "Хэрэгжсэн",
+   "impl": "Correction(kind=reply)"
+  },
+  {
+   "no": 45,
+   "type": "Legal",
+   "name": "Хууль зүйн үндэслэлтэй нуулт",
+   "detail": "Шүүхийн шийдвэр, хувийн мэдээлэл, зохиогчийн эрх, гүтгэлэг, хүүхэд, сонгууль, ёс зүйн үндэслэлтэй түр нууж, зохиогчид мэдэгдэнэ.",
+   "function": "Takedown",
+   "actor": "Админ",
+   "priority": "Өндөр",
+   "status": "Хэрэгжсэн",
+   "impl": "set_visibility(legal_basis)"
+  },
+  {
+   "no": 46,
+   "type": "Legal",
+   "name": "Хувийн мэдээллийн субъектийн эрх",
+   "detail": "Мэдээлэл авах, засах, устгуулах (нууцлах), зөвшөөрөл татах.",
+   "function": "Data subject rights",
+   "actor": "Бүх хэрэглэгч",
+   "priority": "Өндөр",
+   "status": "Хэрэгжсэн",
+   "impl": "Хүний хувийн мэдээлэл хамгаалах тухай хууль"
+  },
+  {
+   "no": 47,
+   "type": "Legal",
+   "name": "Редакцын хуулийн этгээдийн бүртгэл",
+   "detail": "Хуулийн этгээдийн нэр, 7 оронтой регистр, хариуцлагатай эрхлэгч заавал.",
+   "function": "Legal entity",
+   "actor": "Редакц",
+   "priority": "Өндөр",
+   "status": "Хэрэгжсэн",
+   "impl": "Хэвлэлийн эрх чөлөөний тухай хууль"
+  },
+  {
+   "no": 48,
+   "type": "Legal",
+   "name": "Баталгаажуулалтын урьдчилсан нөхцөл",
+   "detail": "Сэтгүүлчийн үнэмлэх/байгууллага, редакцын хуулийн мэдээлэлгүйгээр баталгаажуулалт хүсэх боломжгүй; баталгаажаагүй сэтгүүлч илгээхгүй.",
+   "function": "Verification",
+   "actor": "Сэтгүүлч / Редакц / Админ",
+   "priority": "Өндөр",
+   "status": "Хэрэгжсэн",
+   "impl": "verification_missing"
+  },
+  {
+   "no": 49,
+   "type": "Legal",
+   "name": "Гадны эх сурвалжийн эрх хүндэтгэх",
+   "detail": "Зөвхөн гарчиг, хураангуй, эх холбоос; robots.txt-ийг хүндэтгэнэ (1212.mn API зөвшөөрлөөр).",
+   "function": "Copyright, robots.txt",
+   "actor": "Систем",
+   "priority": "Өндөр",
+   "status": "Хэрэгжсэн",
+   "impl": "Зохиогчийн эрхийн тухай хууль"
+  },
+  {
+   "no": 50,
+   "type": "Legal",
+   "name": "Төлбөрийн буцаалт, татвар",
+   "detail": "НӨАТ шингэсэн үнэ, И-баримт, буцаалтын үндэслэл, хоёр талд мэдэгдэх.",
+   "function": "Refund, VAT",
+   "actor": "Админ / Редакц",
+   "priority": "Өндөр",
+   "status": "ДЕМО",
+   "impl": "НӨАТ-ын тухай хууль, Хэрэглэгчийн эрхийг хамгаалах тухай хууль"
+  },
+  {
+   "no": 51,
+   "type": "Non-functional",
+   "name": "Responsive, минимал UI",
+   "detail": "Цагаан, 8px өнцөг, 12 баганат grid, самбарууд дэлгэц дүүрэн, утсанд нэг багана.",
+   "function": "Responsive UI",
+   "actor": "Бүх хэрэглэгч",
+   "priority": "Дунд",
+   "status": "Хэрэгжсэн",
+   "impl": "styles.css"
+  },
+  {
+   "no": 52,
+   "type": "Non-functional",
+   "name": "Автомат тест",
+   "detail": "Эрхийн матриц, хууль ёсны дүрэм, төлбөр, дэлхийн мэдээ зэрэг 70 тест.",
+   "function": "Tests",
+   "actor": "Систем",
+   "priority": "Өндөр",
+   "status": "Хэрэгжсэн",
+   "impl": "manage.py test"
+  },
+  {
+   "no": 53,
+   "type": "Non-functional",
+   "name": "Байршуулалт, CI/CD",
+   "detail": "Vercel (API sin1, platform, admin), Neon Postgres, Vercel Blob, GitHub push-оор автомат deploy, main хамгаалалт.",
+   "function": "Deployment",
+   "actor": "Систем",
+   "priority": "Өндөр",
+   "status": "Хэрэгжсэн",
+   "impl": "vercel.json, CODEOWNERS"
+  }
+ ],
+ "actors": {
+  "Сэтгүүлч": "Мэдээ оруулж, редакцад нэгдэж, борлуулалтаа хянана.",
+  "Редакц": "Хуулийн этгээд: гишүүн сэтгүүлч, редактор удирдана, мэдээ лицензлэнэ.",
+  "Редакцын редактор": "Тухайн редакцын мэдээг шалгаж нийтэлнэ.",
+  "Pulse.mn редактор": "Бие даасан сэтгүүлчийн мэдээг шалгаж нийтэлнэ.",
+  "Иргэн": "Мэдээ уншиж, гомдол, хариу тайлбар, үнэлгээ өгнө.",
+  "Админ": "Эрх, баталгаажуулалт, хууль зүйн нуулт, төлбөр, нөөцлөлт.",
+  "AI (Gemini / дүрэм)": "Шошго, Pulse Trust, үнэлгээний санал, дэлхийн мэдээний шүүлт.",
+  "Төлбөрийн үйлчилгээ": "QPay / банк (холбогдох хүртэл ДЕМО).",
+  "Мэдээний эх сурвалж": "RSS (Google News, BBC, The Diplomat, ikon.mn), 1212.mn."
+ },
+ "use_cases": [
+  {
+   "name": "Нэвтрэх / Бүртгүүлэх (зөвшөөрөлтэй)",
+   "actors": [
+    "Сэтгүүлч",
+    "Редакц",
+    "Иргэн"
+   ],
+   "reqs": [
+    1,
+    39,
+    40,
+    47
+   ]
+  },
+  {
+   "name": "Профайл ба портфолио удирдах",
+   "actors": [
+    "Сэтгүүлч",
+    "Редакц"
+   ],
+   "reqs": [
+    3
+   ]
+  },
+  {
+   "name": "Баталгаажуулалт хүсэх",
+   "actors": [
+    "Сэтгүүлч",
+    "Редакц"
+   ],
+   "reqs": [
+    48
+   ]
+  },
+  {
+   "name": "Контент байршуулах",
+   "actors": [
+    "Сэтгүүлч",
+    "AI (Gemini / дүрэм)"
+   ],
+   "reqs": [
+    4,
+    5,
+    6,
+    22
+   ]
+  },
+  {
+   "name": "Хууль ёсны мэдэгдэл бөглөх",
+   "actors": [
+    "Сэтгүүлч"
+   ],
+   "reqs": [
+    41
+   ]
+  },
+  {
+   "name": "Редакцад нэгдэх",
+   "actors": [
+    "Сэтгүүлч"
+   ],
+   "reqs": [
+    29
+   ]
+  },
+  {
+   "name": "Төлвийн түүх, мэдэгдэл харах",
+   "actors": [
+    "Сэтгүүлч",
+    "Редакц",
+    "Иргэн"
+   ],
+   "reqs": [
+    32,
+    33
+   ]
+  },
+  {
+   "name": "Сэтгүүлчийн хүсэлт батлах",
+   "actors": [
+    "Редакц"
+   ],
+   "reqs": [
+    29
+   ]
+  },
+  {
+   "name": "Редакторын бүртгэл удирдах",
+   "actors": [
+    "Редакц"
+   ],
+   "reqs": [
+    30
+   ]
+  },
+  {
+   "name": "Контент шалгаж шийдвэр гаргах",
+   "actors": [
+    "Pulse.mn редактор",
+    "Редакцын редактор",
+    "AI (Gemini / дүрэм)"
+   ],
+   "reqs": [
+    7,
+    8,
+    9,
+    31,
+    43
+   ]
+  },
+  {
+   "name": "Залруулга / хариу тайлбар нийтлэх",
+   "actors": [
+    "Pulse.mn редактор",
+    "Редакцын редактор",
+    "Админ"
+   ],
+   "reqs": [
+    21,
+    44
+   ]
+  },
+  {
+   "name": "Мэдээ лицензлэх (худалдан авах)",
+   "actors": [
+    "Редакц",
+    "Төлбөрийн үйлчилгээ"
+   ],
+   "reqs": [
+    11,
+    12,
+    13,
+    38
+   ]
+  },
+  {
+   "name": "Мэдээ хайх, унших",
+   "actors": [
+    "Иргэн",
+    "Сэтгүүлч",
+    "Редакц"
+   ],
+   "reqs": [
+    10,
+    42
+   ]
+  },
+  {
+   "name": "Дэлхийн мэдээ үзэх",
+   "actors": [
+    "Иргэн",
+    "Мэдээний эх сурвалж",
+    "AI (Gemini / дүрэм)"
+   ],
+   "reqs": [
+    36,
+    49
+   ]
+  },
+  {
+   "name": "Статистик, амлалт үзэх",
+   "actors": [
+    "Иргэн"
+   ],
+   "reqs": [
+    16,
+    17,
+    37
+   ]
+  },
+  {
+   "name": "Гомдол / хариу тайлбар илгээх",
+   "actors": [
+    "Иргэн",
+    "Сэтгүүлч",
+    "Редакц"
+   ],
+   "reqs": [
+    20,
+    44
+   ]
+  },
+  {
+   "name": "Үнэлгээ өгөх",
+   "actors": [
+    "Иргэн",
+    "Редакц",
+    "AI (Gemini / дүрэм)"
+   ],
+   "reqs": [
+    34
+   ]
+  },
+  {
+   "name": "Мэдээллээ татах / бүртгэл устгах",
+   "actors": [
+    "Иргэн",
+    "Сэтгүүлч",
+    "Редакц"
+   ],
+   "reqs": [
+    25,
+    46
+   ]
+  },
+  {
+   "name": "Хэрэглэгч ба эрхийн удирдлага",
+   "actors": [
+    "Админ"
+   ],
+   "reqs": [
+    2,
+    48
+   ]
+  },
+  {
+   "name": "Хууль зүйн үндэслэлтэй нуух",
+   "actors": [
+    "Админ"
+   ],
+   "reqs": [
+    45
+   ]
+  },
+  {
+   "name": "Гомдол шийдвэрлэх",
+   "actors": [
+    "Админ"
+   ],
+   "reqs": [
+    20,
+    44
+   ]
+  },
+  {
+   "name": "Төлбөр хянах, буцаах",
+   "actors": [
+    "Админ",
+    "Төлбөрийн үйлчилгээ"
+   ],
+   "reqs": [
+    38,
+    50
+   ]
+  },
+  {
+   "name": "Амлалт, статистикийн өгөгдөл удирдах",
+   "actors": [
+    "Админ"
+   ],
+   "reqs": [
+    16,
+    17,
+    18,
+    37
+   ]
+  },
+  {
+   "name": "Нөөцлөлт, аудит лог",
+   "actors": [
+    "Админ"
+   ],
+   "reqs": [
+    26,
+    27
+   ]
+  }
+ ],
+ "activities": {
+  "UC-04 Шалгалтын чиглүүлэлт (редакц / Pulse.mn)": [
+   [
+    "action",
+    "Сэтгүүлч «Шалгалтад илгээх» дарна"
+   ],
+   [
+    "decision",
+    "Сэтгүүлч баталгаажсан уу?",
+    [
+     [
+      "үгүй",
+      2
+     ],
+     [
+      "тийм",
+      3
+     ]
+    ]
+   ],
+   [
+    "final",
+    "Татгалзана: баталгаажуулалт хүсэх"
+   ],
+   [
+    "decision",
+    "Хууль ёсны мэдэгдэл, заавал талбар бүрэн үү?",
+    [
+     [
+      "үгүй",
+      4
+     ],
+     [
+      "тийм",
+      5
+     ]
+    ]
+   ],
+   [
+    "final",
+    "400: алдааны жагсаалт буцаана"
+   ],
+   [
+    "decision",
+    "Баталгаажсан редакцын идэвхтэй гишүүн, тухайн редакцаа сонгосон уу?",
+    [
+     [
+      "тийм",
+      6
+     ],
+     [
+      "үгүй",
+      7
+     ]
+    ]
+   ],
+   [
+    "action",
+    "review_by = редакц; редакц ба редакторуудад мэдэгдэх"
+   ],
+   [
+    "action",
+    "review_by = Pulse.mn; Pulse.mn редакторуудад мэдэгдэх"
+   ],
+   [
+    "action",
+    "Редактор шалгах жагсаалтаар (6 заавал) шийдвэр гаргана"
+   ],
+   [
+    "action",
+    "Сэтгүүлч, редакцад шийдвэр мэдэгдэж, аудит бичнэ"
+   ],
+   [
+    "final",
+    "Төгсгөл"
+   ]
+  ],
+  "UC-05 Мэдээ лицензлэх (ДЕМО төлбөр)": [
+   [
+    "action",
+    "Редакц нийтлэгдсэн мэдээн дээр лиценз сонгоно (энгийн / онцгой)"
+   ],
+   [
+    "action",
+    "Үнийн задаргаа: НӨАТ, шимтгэл, сэтгүүлчийн дүн"
+   ],
+   [
+    "decision",
+    "Лицензийн нөхцөл зөвшөөрсөн, боломжтой юу?",
+    [
+     [
+      "үгүй",
+      3
+     ],
+     [
+      "тийм",
+      4
+     ]
+    ]
+   ],
+   [
+    "final",
+    "Татгалзана (онцгой эрх зарагдсан г.м.)"
+   ],
+   [
+    "action",
+    "Нэхэмжлэх үүсгэх (provider: demo / qpay)"
+   ],
+   [
+    "decision",
+    "Төлбөр баталгаажсан уу?",
+    [
+     [
+      "цуцалсан",
+      6
+     ],
+     [
+      "тийм",
+      7
+     ]
+    ]
+   ],
+   [
+    "final",
+    "Цуцлагдсан"
+   ],
+   [
+    "action",
+    "Төлөгдсөн; И-баримт олгох; сэтгүүлчид мэдэгдэх"
+   ],
+   [
+    "final",
+    "Төгсгөл (админ буцаалт хийж болно)"
+   ]
+  ],
+  "UC-06 Дэлхийн мэдээ (AI шүүлт)": [
+   [
+    "action",
+    "Cron эсвэл хуучирсан кэш (3 цаг) шинэчлэлтийг эхлүүлнэ"
+   ],
+   [
+    "action",
+    "Эх сурвалж бүрийг зэрэг татна (нэг нь унахад бусад нь үргэлжилнэ)"
+   ],
+   [
+    "action",
+    "Давхардлыг хасаж, хэлийг таниулна"
+   ],
+   [
+    "decision",
+    "Gemini тохируулсан уу?",
+    [
+     [
+      "тийм",
+      4
+     ],
+     [
+      "үгүй",
+      5
+     ]
+    ]
+   ],
+   [
+    "action",
+    "Gemini: холбоо, ангилал, Монгол гарчиг, хураангуй"
+   ],
+   [
+    "action",
+    "Дүрэм: түлхүүр үг, Өвөр Монголыг хасах, ангилал"
+   ],
+   [
+    "action",
+    "Холбоо ≥ 0.5-ийг хадгална (гарчиг, хураангуй, холбоос)"
+   ],
+   [
+    "action",
+    "robots.txt зөвшөөрвөл og:image зураг хайх"
+   ],
+   [
+    "final",
+    "Төгсгөл"
+   ]
+  ]
+ },
+ "classes": [
+  {
+   "name": "User",
+   "attrs": [
+    [
+     "email",
+     "string"
+    ],
+    [
+     "role",
+     "Role"
+    ],
+    [
+     "is_verified",
+     "bool"
+    ],
+    [
+     "press_card_no",
+     "string"
+    ],
+    [
+     "legal_name",
+     "string"
+    ],
+    [
+     "registry_no",
+     "string"
+    ],
+    [
+     "responsible_editor",
+     "string"
+    ],
+    [
+     "terms_accepted_at",
+     "datetime"
+    ],
+    [
+     "privacy_consent_at",
+     "datetime"
+    ],
+    [
+     "ethics_accepted_at",
+     "datetime"
+    ],
+    [
+     "anonymized_at",
+     "datetime"
+    ]
+   ],
+   "note": "Сэтгүүлч, редактор, редакц, иргэн, админ"
+  },
+  {
+   "name": "Content",
+   "attrs": [
+    [
+     "title",
+     "string"
+    ],
+    [
+     "status",
+     "Status"
+    ],
+    [
+     "review_by",
+     "pulse|newsroom"
+    ],
+    [
+     "price",
+     "int"
+    ],
+    [
+     "license",
+     "License"
+    ],
+    [
+     "compliance",
+     "json"
+    ],
+    [
+     "verification",
+     "json"
+    ],
+    [
+     "published_at",
+     "datetime"
+    ]
+   ],
+   "note": "Мэдээ, нийтлэл"
+  },
+  {
+   "name": "Media",
+   "attrs": [
+    [
+     "kind",
+     "image|video|document"
+    ],
+    [
+     "sha256",
+     "string"
+    ],
+    [
+     "phash",
+     "string"
+    ]
+   ],
+   "note": "Vercel Blob-д хадгалсан файл"
+  },
+  {
+   "name": "ContentVersion",
+   "attrs": [
+    [
+     "number",
+     "int"
+    ],
+    [
+     "body",
+     "text"
+    ]
+   ],
+   "note": "Илгээх бүрийн хувилбар"
+  },
+  {
+   "name": "Correction",
+   "attrs": [
+    [
+     "kind",
+     "correction|reply|update"
+    ],
+    [
+     "text",
+     "text"
+    ]
+   ],
+   "note": "Залруулга, хариу тайлбар"
+  },
+  {
+   "name": "Membership",
+   "attrs": [
+    [
+     "status",
+     "pending|active|rejected|left"
+    ]
+   ],
+   "note": "Редакц ↔ сэтгүүлч"
+  },
+  {
+   "name": "Purchase",
+   "attrs": [
+    [
+     "license_type",
+     "standard|exclusive"
+    ],
+    [
+     "amount",
+     "int"
+    ],
+    [
+     "vat_amount",
+     "int"
+    ],
+    [
+     "platform_fee",
+     "int"
+    ],
+    [
+     "author_net",
+     "int"
+    ],
+    [
+     "provider",
+     "string"
+    ],
+    [
+     "ebarimt_no",
+     "string"
+    ],
+    [
+     "status",
+     "pending|paid|cancelled|refunded"
+    ]
+   ],
+   "note": "Лиценз худалдан авалт"
+  },
+  {
+   "name": "Rating",
+   "attrs": [
+    [
+     "score",
+     "1..5"
+    ],
+    [
+     "comment",
+     "string"
+    ]
+   ],
+   "note": "Сэтгүүлч / редакцын үнэлгээ"
+  },
+  {
+   "name": "Complaint",
+   "attrs": [
+    [
+     "target_type",
+     "content|pledge|indicator"
+    ],
+    [
+     "kind",
+     "string"
+    ],
+    [
+     "status",
+     "open|resolved|dismissed"
+    ]
+   ],
+   "note": "Гомдол"
+  },
+  {
+   "name": "Notification",
+   "attrs": [
+    [
+     "title",
+     "string"
+    ],
+    [
+     "is_read",
+     "bool"
+    ]
+   ],
+   "note": "Мэдэгдэл"
+  },
+  {
+   "name": "AuditLog",
+   "attrs": [
+    [
+     "action",
+     "string"
+    ],
+    [
+     "before",
+     "json"
+    ],
+    [
+     "after",
+     "json"
+    ],
+    [
+     "reason",
+     "text"
+    ]
+   ],
+   "note": "Аудит"
+  },
+  {
+   "name": "Politician",
+   "attrs": [
+    [
+     "name",
+     "string"
+    ],
+    [
+     "position",
+     "string"
+    ]
+   ],
+   "note": "Албан тушаалтан"
+  },
+  {
+   "name": "Pledge",
+   "attrs": [
+    [
+     "text",
+     "text"
+    ],
+    [
+     "status",
+     "PledgeStatus"
+    ]
+   ],
+   "note": "Амлалт"
+  },
+  {
+   "name": "Indicator",
+   "attrs": [
+    [
+     "name",
+     "string"
+    ],
+    [
+     "unit",
+     "string"
+    ]
+   ],
+   "note": "Статистик үзүүлэлт"
+  },
+  {
+   "name": "ExternalArticle",
+   "attrs": [
+    [
+     "source",
+     "string"
+    ],
+    [
+     "title_mn",
+     "string"
+    ],
+    [
+     "image_url",
+     "url"
+    ],
+    [
+     "relevance",
+     "float"
+    ]
+   ],
+   "note": "Дэлхийн мэдээ"
+  }
+ ],
+ "associations": [
+  [
+   "Content",
+   "User",
+   "author",
+   "0..*",
+   "1"
+  ],
+  [
+   "Content",
+   "User",
+   "newsroom",
+   "0..*",
+   "0..1"
+  ],
+  [
+   "User",
+   "User",
+   "newsroom_org (редакцын редактор)",
+   "0..*",
+   "0..1"
+  ],
+  [
+   "Media",
+   "Content",
+   "",
+   "0..*",
+   "1"
+  ],
+  [
+   "ContentVersion",
+   "Content",
+   "",
+   "1..*",
+   "1"
+  ],
+  [
+   "Correction",
+   "Content",
+   "",
+   "0..*",
+   "1"
+  ],
+  [
+   "Membership",
+   "User",
+   "journalist",
+   "0..*",
+   "1"
+  ],
+  [
+   "Membership",
+   "User",
+   "newsroom",
+   "0..*",
+   "1"
+  ],
+  [
+   "Purchase",
+   "Content",
+   "",
+   "0..*",
+   "1"
+  ],
+  [
+   "Purchase",
+   "User",
+   "buyer",
+   "0..*",
+   "1"
+  ],
+  [
+   "Rating",
+   "User",
+   "rater/target",
+   "0..*",
+   "1"
+  ],
+  [
+   "Complaint",
+   "User",
+   "reporter",
+   "0..*",
+   "1"
+  ],
+  [
+   "Notification",
+   "User",
+   "",
+   "0..*",
+   "1"
+  ],
+  [
+   "AuditLog",
+   "User",
+   "actor",
+   "0..*",
+   "0..1"
+  ],
+  [
+   "Pledge",
+   "Politician",
+   "",
+   "0..*",
+   "1"
+  ],
+  [
+   "Content",
+   "Pledge",
+   "pledges",
+   "0..*",
+   "0..*"
+  ]
+ ],
+ "deployment": {
+  "nodes": [
+   "Хэрэглэгчийн хөтөч",
+   "Vercel · pulse-mn-platform (Next.js 14)",
+   "Vercel · pulse-mn-admin (Next.js 14)",
+   "Vercel · pulse-mn-api (Django 5, sin1)",
+   "Neon Postgres",
+   "Vercel Blob (медиа)",
+   "Vercel Cron (өдөр бүр)",
+   "Gemini API",
+   "RSS эх сурвалжууд",
+   "GitHub · BuzukLuka/pulse-mn"
+  ],
+  "links": [
+   [
+    "Хэрэглэгчийн хөтөч",
+    "Vercel · pulse-mn-platform (Next.js 14)",
+    "HTTPS"
+   ],
+   [
+    "Хэрэглэгчийн хөтөч",
+    "Vercel · pulse-mn-admin (Next.js 14)",
+    "HTTPS"
+   ],
+   [
+    "Vercel · pulse-mn-platform (Next.js 14)",
+    "Vercel · pulse-mn-api (Django 5, sin1)",
+    "REST /api/v1 (JWT)"
+   ],
+   [
+    "Vercel · pulse-mn-admin (Next.js 14)",
+    "Vercel · pulse-mn-api (Django 5, sin1)",
+    "REST /api/v1 (JWT)"
+   ],
+   [
+    "Vercel · pulse-mn-api (Django 5, sin1)",
+    "Neon Postgres",
+    "SQL"
+   ],
+   [
+    "Vercel · pulse-mn-api (Django 5, sin1)",
+    "Vercel Blob (медиа)",
+    "PUT /api/blob"
+   ],
+   [
+    "Vercel Cron (өдөр бүр)",
+    "Vercel · pulse-mn-api (Django 5, sin1)",
+    "GET /world-news/refresh"
+   ],
+   [
+    "Vercel · pulse-mn-api (Django 5, sin1)",
+    "Gemini API",
+    "HTTPS (сонголттой)"
+   ],
+   [
+    "Vercel · pulse-mn-api (Django 5, sin1)",
+    "RSS эх сурвалжууд",
+    "HTTPS RSS"
+   ],
+   [
+    "GitHub · BuzukLuka/pulse-mn",
+    "Vercel · pulse-mn-api (Django 5, sin1)",
+    "push → deploy"
+   ]
+  ]
+ }
+}

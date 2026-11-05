@@ -38,8 +38,20 @@ General requirement-ийн «Захиалга / Төлбөр тооцоо / За
 | Нөөцлөлт (JSON dump; сэргээх `loaddata`) | `GET /admin/backup/` | admin `/backup` |
 | **Pulse Trust AI давхарга** | `ai/checks.py` | `TrustCard` (platform, editor, journalist) — `docs/INNOVATION.md` |
 
+## v3-д нэмэгдсэн (шаардлагын бүрэн жагсаалт — `docs/requirements.csv`)
+| Хэсэг | Backend | Frontend |
+|---|---|---|
+| Редакц–сэтгүүлч гишүүнчлэл, редакцын редактор, шалгалтын чиглүүлэлт (R29–R31) | `newsroom`, `User.newsroom_org`, `Content.review_by` | `/newsroom`, `/newsroom/review/[id]`, `/editor` |
+| Үнэлгээ, AI үнэлгээний санал, гол сэдэв (R34–R35) | `newsroom.Rating`, `ratings/suggest`, `top_categories` | `/journalists`, `/newsrooms` |
+| Дэлхийн мэдээ AI (R36, R49) | `worldnews` | `/world`, нүүрний тасалбар |
+| Төлбөр ДЕМО (R11–R13, R38, R50) | `newsroom/payments.py`, `Purchase` | `PurchaseBox`, admin `/payments` |
+| Хууль эрх зүй (R39–R48) | `accounts` зөвшөөрөл/эрх, `content.compliance`, `Correction`, `LEGAL_BASES` | `/register`, `/legal/*`, `ContentForm`, `/profile` |
+| Иргэний хэсэг | `complaints`, `notifications` | `/me` |
+
 ## Хийгээгүй / санаатайгаар хассан
-* **Төлбөр, захиалга, худалдан авалт, «Мэдээний зах» (wireframe 12–14)** — хүсэлтийн дагуу.
+* **Бодит төлбөр (QPay, И-баримт)** — гэрээ, API холбогдоогүй тул ДЕМО provider (R38).
+* **Иргэний мэдээллийн маягт, газрын зураг (R14–R15)** — төлөвлөгөөнд.
+* **1212.mn API** — ҮСХ-ны зөвшөөрөл авах хүртэл унтраалттай.
 * Нөөцийг вэбээс «сэргээх» товч — өгөгдлийг бүхэлд нь дарж бичих аюултай тул `manage.py loaddata`-аар гараар (admin `/backup` дээр заавар бий).
 * Файл хадгалалт: Vercel-ийн серверлесс дээр диск байхгүй тул production-д S3/R2/Supabase Storage-д шилжүүлэх шаардлагатай (README).
 * Мэдээллийн сангийн бүх демо өгөгдөл (`seed_demo`) **зохиомол**, бодит тоо биш.

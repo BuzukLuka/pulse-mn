@@ -79,11 +79,8 @@ pgAdmin-д ижил хост/порт/хэрэглэгчээр шинэ серв
 > хадгалагдахгүй. Production-д `django-storages` (S3/Supabase Storage/Cloudflare R2) эсвэл Vercel Blob холбоно
 > (`content.Media.file` талбар storage backend-ээр солигдоход хангалттай).
 
-## API товч
-`POST /auth/register|login|refresh` · `GET /auth/me` · `GET /catalog/{provinces,districts,categories}` ·
-`GET|POST /content/`, `POST /content/{id}/submit|media`, `POST /content/suggest-tags/` ·
-`GET /news/` (нийтийн) · `GET /review/`, `POST /review/{id}/decide|ai-check` ·
-`GET|PATCH /admin/users/` · `GET /admin/content/`, `POST …/hide|restore` · `GET /admin/audit|stats/` · `GET /notifications/`
+## API
+Бүх endpoint, гадны үйлчилгээ, хэрхэн хийгдсэн тухай: [`docs/API.md`](docs/API.md).
 
 ## v2: нэмэгдсэн боломжууд
 Профайл/портфолио, амлалтын хяналт, статистикийн самбар + эх сурвалжийн удирдлага, гомдол, нөөцлөлт, хувилбар/checklist
@@ -92,4 +89,13 @@ pgAdmin-д ижил хост/порт/хэрэглэгчээр шинэ серв
 
 * Зохиомол демо өгөгдөл: `python manage.py seed_demo` (албан ёсны үзүүлэлт, албан тушаалтан, амлалт — **бодит биш**).
 * Миграци шинэчлэгдсэн (`0001_initial` дахин үүссэн) — v1-ийн өгөгдлийн санг шинээр үүсгэнэ үү.
-* Тест: `cd backend && python manage.py test` (18 тест).
+
+## v3: редакц, хууль эрх зүй, төлбөр, дэлхийн мэдээ
+* **Редакц өөрөө шалгана:** баталгаажсан редакцын гишүүн сэтгүүлчийн мэдээг тухайн редакцын редакторууд шалгаж нийтэлнэ;
+  бие даасан сэтгүүлчийнхийг Pulse.mn-ийн редактор. Редакц редакторын бүртгэлээ өөрөө үүсгэнэ.
+* **Хууль эрх зүй:** бүртгэлийн зөвшөөрөл, ёс зүйн дүрэм, хуулийн этгээдийн бүртгэл, мэдээний хууль ёсны мэдэгдэл,
+  ил тод тэмдэглэгээ, залруулга / хариу тайлбар, хууль зүйн үндэслэлтэй нуулт, хувийн мэдээлэл татах/устгах — `/legal`.
+* **Төлбөр (ДЕМО):** энгийн / онцгой лиценз, НӨАТ, шимтгэл, И-баримт; `PAYMENT_PROVIDER`-оор шлюз холбоно.
+* **Дэлхийн мэдээ (AI):** RSS + Gemini/дүрэм, зурагтай сонины grid (`/world`).
+* **Шаардлага, UML:** [`docs/requirements.csv`](docs/requirements.csv) (53), [`docs/model/`](docs/model/README.md) — EA `.feap`.
+* Тест: `cd backend && python manage.py test` (70 тест).
