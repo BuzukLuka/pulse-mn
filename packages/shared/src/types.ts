@@ -129,7 +129,7 @@ export interface Compliance {
 export interface Correction { id: number; kind: "correction" | "reply" | "update"; kind_label: string; text: string; created_at: string }
 export interface ExternalArticle {
   id: number; source: string; source_name: string; url: string; title: string; title_mn: string; snippet: string;
-  summary_mn: string; language: string; published_at: string | null; category: number | null; category_name: string | null;
+  summary_mn: string; language: string; image_url: string; published_at: string | null; category: number | null; category_name: string | null;
   relevance: number; ai_source: "gemini" | "rules";
 }
 export interface PurchaseQuote {

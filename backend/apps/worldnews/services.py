@@ -9,6 +9,9 @@ import html
 import logging
 import re
 from concurrent.futures import ThreadPoolExecutor
+from functools import lru_cache
+from urllib import robotparser
+from urllib.parse import urljoin, urlparse
 from datetime import timedelta
 from email.utils import parsedate_to_datetime
 from xml.etree import ElementTree
@@ -56,6 +59,24 @@ def _get(url):
     return data
 
 
+MRSS = "{http://search.yahoo.com/mrss/}"
+IMG_RE = re.compile(r"""<img[^>]+src=["']([^"']+)["']""", re.I)
+
+
+def rss_image(it):
+    """RSS-ийн зураг: media:content / media:thumbnail / enclosure / тайлбар доторх <img>."""
+    for tag in (MRSS + "content", MRSS + "thumbnail"):
+        for el in it.iter(tag):
+            url = el.get("url", "")
+            if url.startswith("http") and el.get("medium", "image") == "image":
+                return url[:600]
+    enc = it.find("enclosure")
+    if enc is not None and (enc.get("type") or "").startswith("image") and (enc.get("url") or "").startswith("http"):
+        return enc.get("url")[:600]
+    m = IMG_RE.search(html.unescape(it.findtext("description") or ""))
+    return m.group(1)[:600] if m and m.group(1).startswith("http") else ""
+
+
 def parse_rss(xml_bytes):
     root = ElementTree.fromstring(xml_bytes)
     out = []
@@ -69,13 +90,14 @@ def parse_rss(xml_bytes):
                 when = parsedate_to_datetime(it.findtext("pubDate"))
             except (TypeError, ValueError):
                 pass
-        out.append({"title": title, "url": link[:600], "snippet": _clean(it.findtext("description")), "published_at": when})
+        out.append({"title": title, "url": link[:600], "snippet": _clean(it.findtext("description")), "published_at": when,
+                    "image": rss_image(it)})
     return out
 
 
 def parse_nso(json_data):
     return [{"title": _clean(a.get("name"), 400), "url": f"https://www.1212.mn/mn/about-us/news/{a['id']}",
-             "snippet": _clean(a.get("body")), "published_at": parse_datetime(a.get("published_date") or "")}
+             "snippet": _clean(a.get("body")), "published_at": parse_datetime(a.get("published_date") or ""), "image": ""}
             for a in json_data.get("data", []) if a.get("id") and a.get("name")]
 
 
@@ -195,10 +217,68 @@ def refresh(force=False):
             source=it["source"], url=it["url"], title=it["title"], snippet=it["snippet"], language=it["lang"],
             published_at=it["published_at"], relevance=float(e.get("relevance") or 0), ai_source=e.get("ai_source", "rules"),
             title_mn=str(e.get("title_mn") or "")[:400], summary_mn=str(e.get("summary_mn") or "")[:1000],
+            image_url=it.get("image", ""), image_checked=bool(it.get("image")),
             category=cats.get(e.get("category"))))
     ExternalArticle.objects.bulk_create(objs, ignore_conflicts=True)
+    try:
+        fill_images()
+    except Exception:  # noqa: BLE001 — зураг олдохгүй ч мэдээ хадгалагдсан
+        log.exception("og:image fill failed")
     # Хуучин мэдээг цэвэрлэнэ (60 хоног)
     ExternalArticle.objects.filter(fetched_at__lt=timezone.now() - timedelta(days=60)).delete()
     run.finished_at, run.added, run.report = timezone.now(), len(objs), report
     run.save(update_fields=["finished_at", "added", "report"])
     return run
+
+
+# ---------- Нийтлэлийн хуудаснаас og:image (robots.txt зөвшөөрвөл л) ----------
+OG_RE = re.compile(r"""<meta[^>]+(?:property|name)=["'](?:og:image|twitter:image)["'][^>]*content=["']([^"']+)["']""", re.I)
+OG_RE2 = re.compile(r"""<meta[^>]+content=["']([^"']+)["'][^>]*(?:property|name)=["'](?:og:image|twitter:image)["']""", re.I)
+NO_OG_HOSTS = {"news.google.com"}  # JS-ээр шилжүүлдэг холбоос
+
+
+@lru_cache(maxsize=64)
+def _robots(origin):
+    rp = robotparser.RobotFileParser()
+    try:
+        r = requests.get(origin + "/robots.txt", timeout=5, headers={"User-Agent": UA})
+        rp.parse(r.text.splitlines() if r.status_code == 200 else [])
+    except requests.RequestException:
+        rp.parse([])
+    return rp
+
+
+def robots_allowed(url):
+    u = urlparse(url)
+    return _robots(f"{u.scheme}://{u.netloc}").can_fetch(UA, url)
+
+
+def og_image(url):
+    if urlparse(url).hostname in NO_OG_HOSTS or not robots_allowed(url):
+        return ""
+    r = requests.get(url, timeout=6, headers={"User-Agent": UA}, stream=True)
+    r.raise_for_status()
+    page = r.raw.read(300_000, decode_content=True).decode("utf-8", "ignore")
+    m = OG_RE.search(page) or OG_RE2.search(page)
+    img = html.unescape(m.group(1)).strip() if m else ""
+    img = urljoin(url, img) if img else ""
+    return img[:600] if img.startswith("http") else ""
+
+
+def fill_images(limit=24):
+    """Зураггүй шинэ мэдээнд нийтлэлийн og:image-ийг хайна (зэрэг, богино timeout, нэг удаа)."""
+    todo = list(ExternalArticle.objects.filter(image_url="", image_checked=False)
+                .exclude(url__contains="news.google.com").order_by("-id")[:limit])
+    if not todo:
+        return 0
+
+    def one(a):
+        try:
+            return a.pk, og_image(a.url)
+        except Exception:  # noqa: BLE001
+            return a.pk, ""
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        results = list(pool.map(one, todo))
+    for pk, img in results:
+        ExternalArticle.objects.filter(pk=pk).update(image_url=img, image_checked=True)
+    return sum(1 for _, img in results if img)

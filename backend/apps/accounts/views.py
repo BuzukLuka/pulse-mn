@@ -83,11 +83,24 @@ class JournalistListView(generics.ListAPIView):
 
     def list(self, request, *args, **kwargs):
         from apps.newsroom.services import rating_summary
-        qs = User.objects.filter(role=Role.JOURNALIST, is_active=True).select_related("province")             .order_by("-is_verified", "full_name")[:100]
+        qs = list(User.objects.filter(role=Role.JOURNALIST, is_active=True).select_related("province")
+                  .order_by("-is_verified", "full_name")[:100])
+        topics = top_categories([u.pk for u in qs])
         return Response([{"id": u.id, "full_name": u.full_name or u.email.split("@")[0],
                           "is_verified": u.is_verified, "province": u.province.name if u.province else None,
-                          "rating": rating_summary(u)}
+                          "rating": rating_summary(u), "topics": topics.get(u.pk, [])[:3],
+                          "published": sum(t["count"] for t in topics.get(u.pk, []))}
                          for u in qs])
+
+
+def top_categories(author_ids):
+    """Сэтгүүлч бүрийн нийтлэгдсэн мэдээг ангиллаар тоолж, ихээс бага руу эрэмбэлнэ (нэг query)."""
+    out = {}
+    rows = (Content.objects.filter(author_id__in=author_ids, status="published", category__isnull=False)
+            .values("author_id", "category__name", "category__slug").annotate(n=Count("id")).order_by("author_id", "-n"))
+    for r in rows:
+        out.setdefault(r["author_id"], []).append({"name": r["category__name"], "slug": r["category__slug"], "count": r["n"]})
+    return out
 
 
 class JournalistPublicView(APIView):
@@ -106,6 +119,7 @@ class JournalistPublicView(APIView):
             "portfolio": PortfolioSerializer(u.portfolio.all(), many=True).data,
             "works": [{"id": c.id, "title": c.title, "published_at": c.published_at,
                        "province_name": c.province.name if c.province else None} for c in works],
+            "topics": top_categories([u.pk]).get(u.pk, []),
             "newsrooms": [{"id": m.newsroom_id, "name": m.newsroom.full_name or m.newsroom.organization}
                           for m in u.memberships.filter(status="active").select_related("newsroom")],
         })

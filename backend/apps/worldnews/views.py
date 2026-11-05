@@ -21,7 +21,7 @@ class ArticleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ExternalArticle
-        fields = ["id", "source", "source_name", "url", "title", "title_mn", "snippet", "summary_mn", "language",
+        fields = ["id", "source", "source_name", "url", "title", "title_mn", "snippet", "summary_mn", "language", "image_url",
                   "published_at", "category", "category_name", "relevance", "ai_source"]
 
     def get_source_name(self, obj):

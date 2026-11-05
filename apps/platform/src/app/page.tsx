@@ -139,6 +139,8 @@ function WorldStrip() {
       <div className="row spread"><h2 style={{ margin: 0 }}>🌍 Дэлхийд Монголын тухай</h2><a href="/world">Бүгдийг харах →</a></div>
       <div className="grid">{items.map((a) => (
         <a key={a.id} href={a.url} target="_blank" rel="noopener noreferrer" className="card world-card">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          {a.image_url && <img className="nyt-img" src={a.image_url} alt="" loading="lazy" referrerPolicy="no-referrer" style={{ aspectRatio: "3 / 2", borderRadius: 6 }} />}
           <div className="src"><b>{a.source_name}</b>{a.category_name && <span className="badge gray">{a.category_name}</span>}</div>
           <h3 style={{ margin: 0, fontSize: 15.5 }}>{a.title_mn || a.title}</h3>
           <small className="muted">{fmtDate(a.published_at)} · эх сурвалж ↗</small>

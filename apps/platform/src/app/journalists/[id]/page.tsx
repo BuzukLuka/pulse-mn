@@ -15,6 +15,7 @@ export default function JournalistProfile() {
       <div className="row" style={{ margin: "14px 0 20px" }}><div className="avatar" style={{ width: 64, height: 64, fontSize: 22 }}>{initials(j.full_name)}</div>
         <div><h1 style={{ margin: 0 }}>{j.full_name} {j.is_verified && <span className="badge green">Баталгаажсан сэтгүүлч</span>}</h1>
           <div className="muted">{[j.organization, j.province, j.email, j.phone].filter(Boolean).join(" · ")}</div>
+          {j.topics?.length > 0 && <div className="topics">{j.topics.map((t: any, i: number) => <span key={t.slug} className={`badge ${i === 0 ? "blue" : "gray"}`}>{t.name} · {t.count}</span>)}</div>}
           {j.newsrooms?.length > 0 && <div className="muted">🏢 {j.newsrooms.map((n: any, i: number) => <span key={n.id}>{i ? ", " : ""}<a href={`/newsrooms/${n.id}`}>{n.name}</a></span>)}</div>}</div></div>
       <div className="article">
         <div>

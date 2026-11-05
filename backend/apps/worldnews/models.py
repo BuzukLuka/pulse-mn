@@ -11,6 +11,8 @@ class ExternalArticle(models.Model):
     title = models.CharField(max_length=400)
     title_mn = models.CharField(max_length=400, blank=True)        # AI орчуулга (англи эх сурвалжид)
     snippet = models.TextField(blank=True)
+    image_url = models.URLField(max_length=600, blank=True)       # RSS media / og:image (эх сайтын зураг, холбоосоор)
+    image_checked = models.BooleanField(default=False)            # og:image хайсан эсэх (дахин оролдохгүй)
     summary_mn = models.TextField(blank=True)                      # AI хураангуй (Монголоор)
     language = models.CharField(max_length=5, default="en")
     published_at = models.DateTimeField(null=True, blank=True, db_index=True)

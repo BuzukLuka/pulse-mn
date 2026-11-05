@@ -372,6 +372,46 @@ RSS = b"""<?xml version="1.0"?><rss><channel>
 
 
 class WorldNewsTests(Base):
+    def setUp(self):
+        from apps.worldnews import services
+        p = mock.patch.object(services, "og_image", return_value="")  # тестэд гадны сайт руу хандахгүй
+        p.start()
+        self.addCleanup(p.stop)
+
+    def test_rss_image_sources(self):
+        from apps.worldnews.services import parse_rss
+        xml = b"""<rss xmlns:media="http://search.yahoo.com/mrss/"><channel>
+<item><title>A</title><link>https://ex.com/1</link><media:content medium="image" url="https://img.ex.com/1.jpg"/></item>
+<item><title>B</title><link>https://ex.com/2</link><media:thumbnail url="https://img.ex.com/2.jpg"/></item>
+<item><title>C</title><link>https://ex.com/3</link><enclosure type="image/jpeg" url="https://img.ex.com/3.jpg"/></item>
+<item><title>D</title><link>https://ex.com/4</link><description>&lt;img src="https://img.ex.com/4.jpg"&gt; text</description></item>
+<item><title>E</title><link>https://ex.com/5</link><description>no image</description></item>
+</channel></rss>"""
+        self.assertEqual([i["image"] for i in parse_rss(xml)],
+                         ["https://img.ex.com/1.jpg", "https://img.ex.com/2.jpg", "https://img.ex.com/3.jpg", "https://img.ex.com/4.jpg", ""])
+
+    def test_og_image_respects_robots_and_parses_meta(self):
+        from apps.worldnews import services
+        page = b'<html><head><meta property="og:image" content="/img/cover.jpg"></head></html>'
+        resp = mock.Mock(status_code=200, raw=mock.Mock(read=mock.Mock(return_value=page)), raise_for_status=mock.Mock())
+        mock.patch.stopall()  # setUp-ийн mock-ийг энэ тестэд хасна
+        with mock.patch.object(services, "robots_allowed", return_value=True),                 mock.patch.object(services.requests, "get", return_value=resp):
+            self.assertEqual(services.og_image("https://site.mn/n/1"), "https://site.mn/img/cover.jpg")
+        with mock.patch.object(services, "robots_allowed", return_value=False):
+            self.assertEqual(services.og_image("https://site.mn/n/1"), "")
+        self.assertEqual(services.og_image("https://news.google.com/rss/articles/x"), "")
+
+    def test_fill_images_once(self):
+        from apps.worldnews import services
+        from apps.worldnews.models import ExternalArticle
+        a = ExternalArticle.objects.create(source="ikon", url="https://ikon.mn/n/1", title="x", relevance=1)
+        g = ExternalArticle.objects.create(source="google_en", url="https://news.google.com/a", title="y", relevance=1)
+        with mock.patch.object(services, "og_image", return_value="https://content.ikon.mn/a.jpg") as og:
+            self.assertEqual(services.fill_images(), 1)
+            self.assertEqual(services.fill_images(), 0)      # дахин оролдохгүй
+            self.assertEqual(og.call_count, 1)
+        a.refresh_from_db(); g.refresh_from_db()
+        self.assertEqual((a.image_url, a.image_checked, g.image_checked), ("https://content.ikon.mn/a.jpg", True, False))
     def test_parse_rss_strips_html_and_skips_bad_items(self):
         from apps.worldnews.services import parse_rss
         items = parse_rss(RSS)
@@ -593,3 +633,17 @@ class NewsroomStaffEditorTests(Base):
         for u in (self.j, self.editor, self.citizen):
             self.login(u)
             self.assertEqual(self.client.get("/api/v1/newsroom/editors/").status_code, 403)
+
+
+class JournalistTopicsTests(Base):
+    def test_top_categories_on_cards_and_profile(self):
+        econ, edu = Category.objects.get(slug="economy"), Category.objects.get(slug="education")
+        for _ in range(3):
+            self.published(category=econ)
+        self.published(category=edu)
+        Content.objects.create(author=self.j, title="Ноорог", body=BODY, category=edu)  # тооцохгүй
+        card = next(x for x in self.client.get("/api/v1/journalists/").data if x["id"] == self.j.pk)
+        self.assertEqual([(t["name"], t["count"]) for t in card["topics"]], [("Эдийн засаг", 3), ("Боловсрол", 1)])
+        self.assertEqual(card["published"], 4)
+        prof = self.client.get(f"/api/v1/journalists/{self.j.pk}/").data
+        self.assertEqual(prof["topics"][0]["slug"], "economy")
