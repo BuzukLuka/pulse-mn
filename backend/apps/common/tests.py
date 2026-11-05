@@ -683,3 +683,16 @@ class CommentTests(Base):
         self.assertEqual(self.client.delete(f"/api/v1/comments/{ids[1]}/").status_code, 204)
         self.assertTrue(AuditLog.objects.filter(action="comment.hide").exists())
         self.assertEqual(self.client.get(f"/api/v1/comments/?content={c.pk}").data["count"], 3)
+
+
+class NewsFilterTests(Base):
+    def test_category_slug_and_fresh(self):
+        from datetime import timedelta
+        econ = Category.objects.get(slug="economy")
+        new = self.published(category=econ)
+        old = self.published(category=Category.objects.get(slug="politics"), published_at=timezone.now() - timedelta(days=3))
+        ids = lambda q: [x["id"] for x in self.client.get(f"/api/v1/news/{q}").data["results"]]  # noqa: E731
+        self.assertEqual(ids("?c=economy"), [new.pk])
+        self.assertEqual(ids("?c=politics"), [old.pk])
+        self.assertEqual(ids("?fresh=24"), [new.pk])
+        self.assertEqual(sorted(ids("?fresh=bad")), [new.pk])

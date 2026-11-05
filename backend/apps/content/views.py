@@ -134,6 +134,16 @@ class PublicNewsViewSet(viewsets.ReadOnlyModelViewSet):
         for key in ("province", "district", "category"):
             if p.get(key):
                 qs = qs.filter(**{f"{key}_id": p[key]})
+        if p.get("c"):
+            qs = qs.filter(category__slug=p["c"])
+        if p.get("fresh"):  # «Шуурхай»: сүүлийн N цагт нийтлэгдсэн
+            from datetime import timedelta
+            from django.utils import timezone
+            try:
+                hours = max(1, min(168, int(p["fresh"])))
+            except ValueError:
+                hours = 24
+            qs = qs.filter(published_at__gte=timezone.now() - timedelta(hours=hours))
         if p.get("date_from"):
             qs = qs.filter(event_date__gte=p["date_from"])
         if p.get("date_to"):

@@ -30,6 +30,9 @@ function SideItem({ c }: { c: Content }) {
 
 export default function Home() {
   const [q, setQ] = useState(""); const [province, setProvince] = useState(""); const [category, setCategory] = useState("");
+  const [fresh, setFresh] = useState("");
+  // Header-ийн dropdown: /?c=<ангилал> ба /?fresh=24 (шуурхай)
+  useEffect(() => { const u = new URLSearchParams(window.location.search); setCategory(u.get("c") ?? ""); setFresh(u.get("fresh") ?? ""); }, []);
   const [page, setPage] = useState(1);
   const [provinces, setProvinces] = useState<Option[]>([]); const [categories, setCategories] = useState<Category[]>([]);
   const [data, setData] = useState<Paginated<Content> | null>(null); const [err, setErr] = useState("");
@@ -40,18 +43,18 @@ export default function Home() {
   }, []);
   useEffect(() => {
     const t = setTimeout(() => {
-      api<Paginated<Content>>(`/news/${qs({ q, province, category, page })}`, { auth: false })
+      api<Paginated<Content>>(`/news/${qs({ q, province, c: category, fresh, page })}`, { auth: false })
         .then((d) => { setData(d); setErr(""); }).catch(() => setErr("Мэдээ ачаалж чадсангүй. Backend ажиллаж байгаа эсэхийг шалгана уу."));
     }, 250);
     return () => clearTimeout(t);
-  }, [q, province, category, page]);
+  }, [q, province, category, fresh, page]);
 
   const results = data?.results ?? [];
-  const showFeatured = page === 1 && !q && results.length >= 3;
+  const showFeatured = page === 1 && !q && !fresh && results.length >= 3;
   const [lead, ...rest] = results;
   const side = showFeatured ? rest.slice(0, 3) : [];
   const grid = showFeatured ? rest.slice(3) : results;
-  const filtered = !!(q || province || category);
+  const filtered = !!(q || province || category || fresh);
 
   return (
     <>
@@ -74,11 +77,13 @@ export default function Home() {
         </div>
       </section>
 
+      {fresh && <div className="alert error" style={{ display: "flex", justifyContent: "space-between" }}><b>● Шуурхай — сүүлийн {fresh} цагт</b>
+        <a href="/">Бүх мэдээ →</a></div>}
       <div className="filters">
         <div className="pill-row" role="tablist" aria-label="Ангилал">
           <button className={`pill ${category === "" ? "on" : ""}`} onClick={() => { setCategory(""); setPage(1); }}>Бүгд</button>
           {categories.map((c) => (
-            <button key={c.id} className={`pill ${String(c.id) === category ? "on" : ""}`} onClick={() => { setCategory(String(c.id)); setPage(1); }}>{c.name}</button>
+            <button key={c.id} className={`pill ${c.slug === category ? "on" : ""}`} onClick={() => { setCategory(c.slug); setPage(1); }}>{c.name}</button>
           ))}
         </div>
         <select aria-label="Аймаг" value={province} onChange={(e) => { setProvince(e.target.value); setPage(1); }}>
@@ -94,7 +99,7 @@ export default function Home() {
 
       {data && results.length === 0 && (
         filtered
-          ? <Empty title="Илэрц олдсонгүй" action={<button className="btn secondary" onClick={() => { setQ(""); setProvince(""); setCategory(""); }}>Шүүлтүүр цэвэрлэх</button>}>
+          ? <Empty title="Илэрц олдсонгүй" action={<button className="btn secondary" onClick={() => { setQ(""); setProvince(""); setCategory(""); setFresh(""); }}>Шүүлтүүр цэвэрлэх</button>}>
               Өөр түлхүүр үг, ангилал эсвэл аймгаар хайгаад үзээрэй.
             </Empty>
           : <Empty title="Удахгүй анхны мэдээ гарна" action={<div className="row" style={{ justifyContent: "center" }}><a className="btn" href="/stats">Статистик үзэх</a><a className="btn secondary" href="/pledges">Амлалтын хяналт</a></div>}>

@@ -34,13 +34,13 @@ export const Logo = ({ tag }: { tag?: string }) => (
   </a>
 );
 
-type NavItem = { href: string; label: string };
+export type NavItem = { href: string; label: string; children?: NavItem[] };
 
 /** Одоогийн замд тохирох цэсийг тодруулна ("/" зөвхөн яг таарвал). */
 function useActive(nav: NavItem[]) {
   const [path, setPath] = useState("");
   useEffect(() => setPath(window.location.pathname), []);
-  const best = nav.filter((n) => n.href === "/" ? path === "/" : path === n.href || path.startsWith(n.href + "/"))
+  const best = nav.filter((n) => !n.href.includes("?")).filter((n) => n.href === "/" ? path === "/" : path === n.href || path.startsWith(n.href + "/"))
     .sort((a, b) => b.href.length - a.href.length)[0];
   return best?.href;
 }
@@ -52,7 +52,12 @@ export function Shell({ brand, nav, right, children, variant = "site", footer = 
   { brand?: string; nav: NavItem[]; right?: ReactNode; children: ReactNode; variant?: "site" | "app"; footer?: boolean }) {
   const [open, setOpen] = useState(false);
   const active = useActive(nav);
-  const links = nav.map((n) => <a key={n.href} href={n.href} className={n.href === active ? "on" : ""}>{n.label}</a>);
+  const links = nav.map((n) => n.children?.length ? (
+    <div key={n.label} className="dd">
+      <a href={n.href} className={n.href === active ? "on" : ""} aria-haspopup="true">{n.label} <span className="caret">▾</span></a>
+      <div className="dd-menu" role="menu">{n.children.map((c) => <a key={c.href} href={c.href} role="menuitem">{c.label}</a>)}</div>
+    </div>
+  ) : <a key={n.href} href={n.href} className={n.href === active ? "on" : ""}>{n.label}</a>);
 
   if (variant === "app") {
     return (

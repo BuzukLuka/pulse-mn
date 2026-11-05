@@ -360,10 +360,9 @@ input[type=file]::file-selector-button{border-radius:6px}
 .kpis{margin-bottom:16px}
 .kpi-card .stat{margin-top:2px}
 
-/* Самбарууд дэлгэц дүүрэн */
-.container:has(.dash){max-width:none;padding:24px 28px 48px}
-.app .container{max-width:none;padding:24px 28px 48px}
-@media(max-width:640px){.container:has(.dash),.app .container{padding:16px}}
+/* Бүх хуудас (самбар, админ орно) ижил 1200px grid-д */
+.container,.app .container{max-width:1200px;padding:28px 20px 56px}
+@media(max-width:640px){.container,.app .container{padding:16px 16px 48px}}
 .dash .page-head{margin-bottom:16px}
 .list-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line);flex-wrap:wrap}
 .list-row:first-child{border-top:0}
@@ -406,3 +405,22 @@ input[type=file]::file-selector-button{border-radius:6px}
   .nyt-grid .nyt-story{border-left:0;padding:0 0 16px;border-bottom:1px solid var(--line)}
 }
 .topics{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+
+/* ───────── Header: цэвэрхэн, dropdown ───────── */
+.topbar{gap:28px;border-bottom:1px solid var(--line);box-shadow:0 1px 0 rgba(16,24,40,.02)}
+.topbar nav{gap:4px}
+.topbar nav>a,.dd>a{font-weight:600;color:#344054}
+.topbar nav a.live-link{color:var(--red)}.topbar nav a.live-link::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--red);margin-right:6px;vertical-align:1px;animation:ping 1.8s infinite}
+.dd{position:relative}
+.dd .caret{font-size:10px;opacity:.6;margin-left:2px}
+.dd-menu{position:absolute;top:calc(100% + 6px);left:0;min-width:220px;background:#fff;border:1px solid var(--line);border-radius:8px;
+  box-shadow:var(--shadow-lg);padding:6px;display:none;flex-direction:column;z-index:40}
+.dd-menu::before{content:"";position:absolute;top:-8px;left:0;right:0;height:8px}
+.dd:hover .dd-menu,.dd:focus-within .dd-menu{display:flex}
+.dd-menu a{padding:8px 10px;border-radius:6px;color:var(--text)!important;font-weight:500!important;font-size:14px;white-space:nowrap}
+.dd-menu a:hover{background:var(--gray-bg);text-decoration:none}
+@media(max-width:960px){
+  .topbar.open .dd{display:flex;flex-direction:column}
+  .topbar.open .dd-menu{display:flex;position:static;box-shadow:none;border:0;padding:0 0 0 14px;min-width:0}
+  .topbar.open .dd-menu::before{display:none}
+}
