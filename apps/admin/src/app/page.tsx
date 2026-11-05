@@ -17,7 +17,7 @@ export default function Dashboard() {
       {!s && <div className="grid">{[0, 1, 2, 3].map((i) => <div key={i} className="skeleton" style={{ height: 140 }} />)}</div>}
       {s && (
         <>
-          <div className="grid">
+          <div className="kpis">
             <div className="card kpi-card"><div className="ico">👥</div><div className="muted">Нийт хэрэглэгч</div><div className="stat">{s.users_total}</div></div>
             <div className="card kpi-card"><div className="ico">📰</div><div className="muted">Нийт контент</div><div className="stat">{s.content_total}</div></div>
             <div className="card kpi-card"><div className="ico">⏳</div><div className="muted">Шалгалт хүлээж буй</div><div className="stat">{s.content_by_status.under_review ?? 0}</div></div>

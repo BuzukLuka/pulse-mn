@@ -91,8 +91,9 @@ def submit(content, actor):
     audit.log(actor, "content.submit", "content", content.pk, {"status": before},
               {"status": content.status})
     if content.review_by == "newsroom":
-        notify(content.newsroom, "Шалгах мэдээ ирлээ — танай редакц шийдвэр гаргана",
-               f"{content.author.full_name or content.author.email}: {content.title}", content.pk)
+        for u in [content.newsroom, *content.newsroom.staff.filter(role="editor", is_active=True)]:
+            notify(u, "Шалгах мэдээ ирлээ — танай редакц шийдвэр гаргана",
+                   f"{content.author.full_name or content.author.email}: {content.title}", content.pk)
     else:
         notify_editors("Шинэ контент шалгалтад ирлээ", content.title, content.pk)
         if content.newsroom_id:

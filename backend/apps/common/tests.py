@@ -530,3 +530,66 @@ class NewsroomReviewTests(Base):
                                           format="json").status_code, 404)
         self.login(self.j)
         self.assertEqual(self.client.get(f"/api/v1/newsroom/content/{c.pk}/").status_code, 403)
+
+
+# ---------- Редакцын өөрийн редакторууд ----------
+class NewsroomStaffEditorTests(Base):
+    def setUp(self):
+        from apps.newsroom.models import Membership
+        Membership.objects.create(newsroom=self.nr, journalist=self.j, status="active")
+        self.login(self.nr)
+        r = self.client.post("/api/v1/newsroom/editors/", {"email": "Staff@T.mn", "full_name": "Редакцын редактор", "password": PW},
+                             format="json")
+        self.assertEqual(r.status_code, 201, r.content)
+        self.staff = User.objects.get(email="staff@t.mn")
+
+    def submit(self, author, newsroom=None):
+        self.login(author)
+        cid = self.client.post("/api/v1/content/", self.payload(newsroom=newsroom.pk if newsroom else None), format="json").data["id"]
+        self.client.post(f"/api/v1/content/{cid}/submit/")
+        return cid
+
+    def test_newsroom_creates_editor_account(self):
+        self.assertEqual((self.staff.role, self.staff.newsroom_org_id), ("editor", self.nr.pk))
+        self.assertEqual(self.client.post("/api/v1/newsroom/editors/", {"email": "staff@t.mn", "full_name": "x", "password": PW},
+                                          format="json").status_code, 409)
+        self.assertEqual(self.client.post("/api/v1/newsroom/editors/", {"email": "w@t.mn", "full_name": "x", "password": "123"},
+                                          format="json").status_code, 422)
+        self.assertEqual([e["email"] for e in self.client.get("/api/v1/newsroom/editors/").data], ["staff@t.mn"])
+        self.login(self.staff)
+        me = self.client.get("/api/v1/auth/me/").data
+        self.assertEqual(me["newsroom_org_name"], "Редакц")
+
+    def test_staff_editor_reviews_only_own_newsroom(self):
+        mine = self.submit(self.j, self.nr)            # редакц руу
+        pulse = self.submit(self.j2)                    # бие даасан → Pulse
+        self.assertTrue(Notification.objects.filter(user=self.staff, content_id=mine).exists())
+        self.assertFalse(Notification.objects.filter(user=self.staff, content_id=pulse).exists())
+        self.assertFalse(Notification.objects.filter(user=self.editor, content_id=mine).exists())
+        self.login(self.staff)
+        self.assertEqual([c["id"] for c in self.client.get("/api/v1/review/").data["results"]], [mine])
+        self.assertEqual(self.client.get(f"/api/v1/review/{pulse}/").status_code, 404)
+        r = self.client.post(f"/api/v1/review/{mine}/decide/", {"decision": "approve", "checklist": ALL_CHECKS}, format="json")
+        self.assertEqual(r.data["status"], "published")
+        self.assertEqual(self.client.get(f"/api/v1/news/{mine}/").data["trust"]["verified_by"], "Редакцын редактор")
+        self.login(self.editor)                         # Pulse-ийн редактор
+        self.assertEqual([c["id"] for c in self.client.get("/api/v1/review/").data["results"]], [pulse])
+
+    def test_other_newsroom_staff_and_deactivation(self):
+        mine = self.submit(self.j, self.nr)
+        self.login(self.nr2)
+        self.client.post("/api/v1/newsroom/editors/", {"email": "o@t.mn", "full_name": "Өөр", "password": PW}, format="json")
+        other = User.objects.get(email="o@t.mn")
+        self.assertEqual(self.client.post(f"/api/v1/newsroom/editors/{self.staff.pk}/active/", {"active": False},
+                                          format="json").status_code, 404)
+        self.login(other)
+        self.assertEqual(self.client.get(f"/api/v1/review/{mine}/").status_code, 404)
+        self.login(self.nr)
+        self.client.post(f"/api/v1/newsroom/editors/{self.staff.pk}/active/", {"active": False}, format="json")
+        r = self.client.post("/api/v1/auth/login/", {"email": "staff@t.mn", "password": PW}, format="json")
+        self.assertEqual(r.status_code, 401)
+
+    def test_only_newsroom_role_manages_editors(self):
+        for u in (self.j, self.editor, self.citizen):
+            self.login(u)
+            self.assertEqual(self.client.get("/api/v1/newsroom/editors/").status_code, 403)

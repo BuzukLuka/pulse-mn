@@ -16,8 +16,7 @@ function VerificationBanner() {
   }
   return (
     <div className="alert info banner">
-      <div><b>Таны бүртгэл баталгаажаагүй байна.</b> Ноорог хадгалж болно, харин шалгалтад илгээхийн тулд админ таны
-        сэтгүүлчийн үнэмлэх / байгууллагыг шалгаж баталгаажуулах шаардлагатай.{err && <div className="error">{err}</div>}</div>
+      <div><b>Бүртгэл баталгаажаагүй.</b> Илгээхийн өмнө баталгаажуулна уу.{err && <div className="error">{err}</div>}</div>
       {requested ? <span className="badge amber">Хүсэлт илгээсэн · {fmtDate(requested)}</span>
         : <button className="btn sm" onClick={request}>Баталгаажуулалт хүсэх</button>}
     </div>
@@ -40,7 +39,6 @@ function NewsroomCard() {
   return (
     <div className="card">
       <h3>🏢 Миний редакц</h3>
-      <p className="muted" style={{ marginTop: 0 }}>Мэдээгээ ямар ч редакц руу илгээж болно. Редакцад нэгдвэл (редакц батална) профайлд «редакцын сэтгүүлч» гэж харагдаж, редакцын хуудсанд жагсаагдана.</p>
       {mine.filter((m) => m.status !== "left").map((m) => (
         <div key={m.id} className="row spread review">
           <div><a href={`/newsrooms/${m.newsroom.id}`}><b>{m.newsroom.name}</b></a> <span className={`badge ${MEMBERSHIP_TONE[m.status]}`}>{m.status_label}</span></div>
@@ -70,7 +68,7 @@ function Sales() {
       {items.map((p) => <div key={p.id} className="row spread review"><div><a href={`/news/${p.content.id}`}>{p.content.title}</a>
         <div className="muted">{p.buyer.name} · {fmtDate(p.created_at)}</div></div>
         <span className={`badge ${PURCHASE_TONE[p.status]}`}>{p.status_label} · танд {fmtMoney(p.author_net)}</span></div>)}
-      <small className="muted">Дүн нь НӨАТ (10%), платформын шимтгэл хассан, танд шилжих дүн. <a href="/legal/payments">Нөхцөл</a></small></div>
+      <small className="muted">НӨАТ, шимтгэл хассан дүн.</small></div>
   );
 }
 
@@ -80,10 +78,18 @@ export default function MyContent() {
   useEffect(() => { api<Record<string, number>>("/content/summary/").then(setSum).catch(() => {}); }, []);
   useEffect(() => { api<Paginated<Content>>(`/content/${filter ? `?status=${filter}` : ""}`).then((d) => setItems(d.results)).finally(() => setLoaded(true)); }, [filter]);
   return (
-    <RequireRole roles={["journalist"]}>
+    <RequireRole roles={["journalist"]}><div className="dash">
       <div className="page-head"><h1>Миний контент</h1><a className="btn" href="/journalist/new">+ Шинэ контент</a></div>
       <VerificationBanner />
-      <div className="two"><NewsroomCard /><Sales /></div>
+      {sum && (
+        <div className="kpis">
+          <div className="card kpi-card"><div className="muted">Нийт</div><div className="stat">{sum.total}</div></div>
+          <div className="card kpi-card"><div className="muted">Шалгалтад</div><div className="stat">{sum.under_review ?? 0}</div></div>
+          <div className="card kpi-card"><div className="muted">Засвар хэрэгтэй</div><div className="stat">{sum.changes_requested ?? 0}</div></div>
+          <div className="card kpi-card"><div className="muted">Нийтлэгдсэн</div><div className="stat">{sum.published ?? 0}</div></div>
+        </div>
+      )}
+      <div className="g-2"><NewsroomCard /><Sales /></div>
       {sum && (
         <div className="pill-row" style={{ margin: "12px 0" }}>
           <button className={`pill ${filter === "" ? "on" : ""}`} onClick={() => setFilter("")}>Бүгд {sum.total}</button>
@@ -98,6 +104,6 @@ export default function MyContent() {
           <StatusBadge status={c.status} />
         </a>
       ))}
-    </RequireRole>
+    </div></RequireRole>
   );
 }

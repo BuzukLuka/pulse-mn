@@ -16,6 +16,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
   if (user?.role === "journalist") nav.push({ href: "/journalist", label: "Миний контент" });
   if (user?.role === "editor" || user?.role === "admin") nav.push({ href: "/editor", label: "Шалгах жагсаалт" });
   if (user?.role === "newsroom") nav.push({ href: "/newsroom", label: "Редакцын самбар" });
+  if (user?.role === "citizen") nav.push({ href: "/me", label: "Миний хэсэг" });
   if (user) nav.push({ href: "/complaints", label: "Гомдол" });
 
   return (

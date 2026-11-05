@@ -1,0 +1,5 @@
+# Код хариуцагч: frontend (apps/, packages/) — frontend хөгжүүлэгчид, бусад бүх хэсэг — төслийн эзэн.
+# main салбарт «Require review from Code Owners» асаавал backend-ийн өөрчлөлтөд эзний зөвшөөрөл заавал болно.
+*            @BuzukLuka
+/apps/       @BuzukLuka @amarbiligd99-cell @btmandahegshiglen26-lgtm
+/packages/   @BuzukLuka @amarbiligd99-cell @btmandahegshiglen26-lgtm

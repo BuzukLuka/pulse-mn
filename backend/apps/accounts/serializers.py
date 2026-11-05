@@ -25,6 +25,11 @@ class UserSerializer(serializers.ModelSerializer):
     experiences = ExperienceSerializer(many=True, read_only=True)
     portfolio = PortfolioSerializer(many=True, read_only=True)
     province_name = serializers.CharField(source="province.name", default=None, read_only=True)
+    newsroom_org_name = serializers.SerializerMethodField()
+
+    def get_newsroom_org_name(self, obj):
+        o = obj.newsroom_org
+        return (o.full_name or o.legal_name or o.email) if o else None
 
     class Meta:
         model = User
@@ -32,9 +37,9 @@ class UserSerializer(serializers.ModelSerializer):
                   "district", "show_email", "show_phone", "show_org", "role", "is_active", "is_verified",
                   "verification_requested_at", "created_at", "experiences", "portfolio",
                   "press_card_no", "legal_name", "registry_no", "responsible_editor",
-                  "terms_accepted_at", "privacy_consent_at", "ethics_accepted_at"]
+                  "terms_accepted_at", "privacy_consent_at", "ethics_accepted_at", "newsroom_org", "newsroom_org_name"]
         read_only_fields = ["id", "email", "role", "is_active", "is_verified", "verification_requested_at", "created_at",
-                            "terms_accepted_at", "privacy_consent_at", "ethics_accepted_at"]
+                            "terms_accepted_at", "privacy_consent_at", "ethics_accepted_at", "newsroom_org"]
 
     def validate_registry_no(self, v):
         return validate_registry(v)

@@ -73,6 +73,43 @@ def active_newsroom_ids(journalist):
     return set(Membership.objects.filter(journalist=journalist, status="active").values_list("newsroom_id", flat=True))
 
 
+# ---------- Редакцын редакторууд ----------
+@transaction.atomic
+def create_staff_editor(newsroom, email, full_name, password):
+    from django.contrib.auth.password_validation import validate_password
+    from django.core.exceptions import ValidationError as DjangoValidationError
+    from django.utils import timezone as tz
+    email = (email or "").strip().lower()
+    if not email or "@" not in email or not (full_name or "").strip():
+        raise Unprocessable("Имэйл, нэр заавал.")
+    if User.objects.filter(email__iexact=email).exists():
+        raise Conflict("Энэ имэйлээр бүртгэл аль хэдийн байна.")
+    try:
+        validate_password(password or "")
+    except DjangoValidationError as e:
+        raise Unprocessable(" ".join(e.messages))
+    now = tz.now()
+    u = User.objects.create_user(email, password, role=Role.EDITOR, full_name=full_name.strip(), newsroom_org=newsroom,
+                                 organization=newsroom.legal_name or newsroom.full_name, is_verified=True,
+                                 terms_accepted_at=now, privacy_consent_at=now, ethics_accepted_at=now)
+    audit.log(newsroom, "staff.create", "user", u.pk, None, {"role": "editor", "newsroom": newsroom.pk})
+    notify(u, f"Та «{display_name(newsroom)}» редакцын редактороор бүртгэгдлээ", "Шалгах жагсаалтаас мэдээ шалгана.")
+    return u
+
+
+@transaction.atomic
+def set_staff_active(newsroom, staff, active):
+    from apps.accounts.services import revoke_sessions
+    if staff.newsroom_org_id != newsroom.pk:
+        raise Unprocessable("Энэ редактор танай редакцынх биш.")
+    staff.is_active = bool(active)
+    staff.save(update_fields=["is_active"])
+    if not staff.is_active:
+        revoke_sessions(staff)
+    audit.log(newsroom, "staff.activate" if active else "staff.deactivate", "user", staff.pk)
+    return staff
+
+
 # ---------- Баталгаажуулалтын хүсэлт ----------
 def request_verification(user):
     if user.is_verified:

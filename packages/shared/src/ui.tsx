@@ -83,7 +83,7 @@ export function Shell({ brand, nav, right, children, variant = "site", footer = 
         <div className="footer-grid">
           <div>
             <Logo />
-            <p style={{ maxWidth: "38ch", marginTop: 14 }}>Сэтгүүлч оруулж, редактор AI-ийн тусламжтай шалгаж баталгаажуулсан орон нутгийн мэдээ, мэдээлэл.</p>
+            <p style={{ marginTop: 10 }}>Шалгагдсан орон нутгийн мэдээ.</p>
           </div>
           <div><h4>Үзэх</h4><a href="/">Мэдээ</a><a href="/stats">Статистик</a><a href="/pledges">Амлалтын хяналт</a><a href="/journalists">Сэтгүүлчид</a></div>
           <div><h4>Оролцох</h4><a href="/register">Сэтгүүлчээр бүртгүүлэх</a><a href="/login">Нэвтрэх</a><a href="/complaints">Гомдол, санал</a></div>

@@ -20,6 +20,13 @@ def membership_json(m):
             "journalist": services.journalist_card(m.journalist)}
 
 
+def staff_json(u):
+    from apps.content.models import Content
+    return {"id": u.id, "email": u.email, "full_name": u.full_name, "is_active": u.is_active,
+            "last_login": u.last_login, "created_at": u.created_at,
+            "decisions": Content.objects.filter(reviewed_by=u).count()}
+
+
 def purchase_json(p):
     return {"id": p.id, "status": p.status, "status_label": p.get_status_display(), "amount": p.amount,
             "invoice_code": p.invoice_code, "created_at": p.created_at, "paid_at": p.paid_at,
@@ -96,6 +103,20 @@ class NewsroomDashboardViewSet(viewsets.ViewSet):
                          "pending": Membership.objects.filter(newsroom=request.user, status="pending").count(),
                          "purchases": Purchase.objects.filter(buyer=request.user, status="paid").count(),
                          "rating": services.rating_summary(request.user)})
+
+    @action(detail=False, methods=["get", "post"])
+    def editors(self, request):
+        """Редакцын редакторууд: жагсаалт / шинээр үүсгэх (имэйл, нэр, анхны нууц үг)."""
+        if request.method == "POST":
+            d = request.data
+            u = services.create_staff_editor(request.user, d.get("email"), d.get("full_name"), d.get("password"))
+            return Response(staff_json(u), status=201)
+        return Response([staff_json(u) for u in request.user.staff.filter(role=Role.EDITOR).order_by("-is_active", "full_name")])
+
+    @action(detail=False, methods=["post"], url_path=r"editors/(?P<uid>\d+)/active")
+    def editor_active(self, request, uid=None):
+        u = generics.get_object_or_404(User, pk=uid, newsroom_org=request.user)
+        return Response(staff_json(services.set_staff_active(request.user, u, request.data.get("active", True))))
 
     @action(detail=False, methods=["get"])
     def members(self, request):

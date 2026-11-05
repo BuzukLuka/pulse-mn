@@ -10,5 +10,5 @@ def notify_editors(title, body="", content_id=None):
     from apps.accounts.models import Role, User
     Notification.objects.bulk_create([
         Notification(user=u, title=title, body=body, content_id=content_id)
-        for u in User.objects.filter(role=Role.EDITOR, is_active=True)
+        for u in User.objects.filter(role=Role.EDITOR, is_active=True, newsroom_org__isnull=True)
     ])

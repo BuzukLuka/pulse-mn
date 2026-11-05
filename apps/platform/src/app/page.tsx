@@ -61,7 +61,7 @@ export default function Home() {
         </svg>
         <div className="eyebrow"><span className="live" /> Шууд · Орон нутгаас</div>
         <h1>Мэдээ бүр <em>шалгагдсан</em>.</h1>
-        <p className="lead">Сэтгүүлч оруулж, редактор Pulse Trust AI-ийн тусламжтай баримтыг тулган шалгаж нийтэлдэг — 21 аймгийн баталгаатай мэдээлэл нэг дор.</p>
+        <p className="lead">21 аймгийн шалгагдсан мэдээ нэг дор.</p>
         <label className="search">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
           <input aria-label="Хайх" placeholder="Түлхүүр үг, аймаг, сэдвээр хайх…" value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} />
@@ -137,7 +137,6 @@ function WorldStrip() {
   return (
     <section style={{ marginTop: 36 }}>
       <div className="row spread"><h2 style={{ margin: 0 }}>🌍 Дэлхийд Монголын тухай</h2><a href="/world">Бүгдийг харах →</a></div>
-      <p className="muted" style={{ marginTop: 4 }}>Олон улсын хэвлэлээс AI автоматаар шүүсэн</p>
       <div className="grid">{items.map((a) => (
         <a key={a.id} href={a.url} target="_blank" rel="noopener noreferrer" className="card world-card">
           <div className="src"><b>{a.source_name}</b>{a.category_name && <span className="badge gray">{a.category_name}</span>}</div>

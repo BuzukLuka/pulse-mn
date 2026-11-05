@@ -46,6 +46,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     registry_no = models.CharField(max_length=20, blank=True)         # хуулийн этгээдийн регистрийн дугаар
     responsible_editor = models.CharField(max_length=120, blank=True) # хариуцлагатай эрхлэгч
     anonymized_at = models.DateTimeField(null=True, blank=True)       # бүртгэл устгасан (мэдээлэл нууцалсан)
+    # Редакцын редактор: тухайн редакц (хуулийн этгээд) үүсгэсэн ажилтан. Хоосон бол Pulse.mn-ийн редактор.
+    newsroom_org = models.ForeignKey("self", null=True, blank=True, on_delete=models.CASCADE, related_name="staff",
+                                     limit_choices_to={"role": "newsroom"})
     show_email = models.BooleanField(default=False)   # профайлын нууцлалын тохиргоо
     show_phone = models.BooleanField(default=False)
     show_org = models.BooleanField(default=True)

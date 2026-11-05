@@ -7,6 +7,7 @@ export interface User {
   bio: string; role: Role; is_active: boolean; created_at: string; last_login?: string | null;
   is_verified?: boolean; verification_requested_at?: string | null; province?: number | null;
   press_card_no?: string; legal_name?: string; registry_no?: string; responsible_editor?: string;
+  newsroom_org?: number | null; newsroom_org_name?: string | null;
   terms_accepted_at?: string | null; privacy_consent_at?: string | null; ethics_accepted_at?: string | null; province_name?: string | null; district?: number | null;
   show_email?: boolean; show_phone?: boolean; show_org?: boolean;
   experiences?: Experience[]; portfolio?: PortfolioItem[];

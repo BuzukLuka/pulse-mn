@@ -27,10 +27,6 @@ export default function WorldNews() {
         <div><div className="eyebrow"><span className="live" /> AI · Дэлхийн хэвлэл</div><h1>Дэлхийд Монголын тухай</h1></div>
         {src?.last_run && <small className="muted">Сүүлд шинэчилсэн: {fmtDateTime(src.last_run.at)}</small>}
       </div>
-      <p className="muted" style={{ marginTop: -10, maxWidth: "70ch" }}>
-        Олон улсын болон дотоодын эх сурвалжаас Монголтой холбоотой мэдээг AI автоматаар шүүж, ангилж, Монголоор хураангуйлна.
-        Зохиогчийн эрхийг хүндэтгэн зөвхөн гарчиг, товч хураангуйг харуулж, эх сурвалж руу холбоно.
-      </p>
       <div className="filters">
         <div className="pill-row">
           <button className={`pill ${source === "" ? "on" : ""}`} onClick={() => { setSource(""); setPage(1); }}>Бүх эх сурвалж</button>
@@ -65,10 +61,7 @@ export default function WorldNews() {
           <button className="btn secondary sm" disabled={!data.next} onClick={() => setPage(page + 1)}>Дараах →</button>
         </div>
       )}
-      <p className="muted" style={{ marginTop: 24 }}>
-        Үндэсний статистикийн хороо (1212.mn)-ны албан ёсны мэдээг тэдний зөвшөөрлөөр шууд холбоно; одоогоор ҮСХ-ны тухай мэдээг Google News-ээр дамжуулан харуулж байна.
-        Албан ёсны статистик тоо <a href="/stats">Статистик</a> хэсэгт.
-      </p>
+      <p className="muted" style={{ marginTop: 20 }}>Эх сурвалж руу холбоно. Албан ёсны тоо — <a href="/stats">Статистик</a>.</p>
     </>
   );
 }

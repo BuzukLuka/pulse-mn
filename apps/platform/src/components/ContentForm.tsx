@@ -169,8 +169,7 @@ export default function ContentForm({ initial, onDone }: { initial?: Content; on
             <input type="number" min={0} step={1000} value={f.price} onChange={set("price")} />
           </Field>
         </div>
-        <small className="muted">Та сонгосон редакцын <b>гишүүн</b> бөгөөд редакц <b>баталгаажсан</b> бол мэдээг тэр редакц өөрөө шалгаж нийтэлнэ;
-          бусад тохиолдолд Pulse.mn-ийн редактор шалгаж, редакц мэдэгдэл авна. Үнэ тавибал нийтлэгдсэний дараа редакцууд худалдан авч болно.</small>
+        <small className="muted">Гишүүн бол тэр редакцын редактор шалгана, бусад үед Pulse.mn.</small>
       </div>
 
       <div className="card">
@@ -185,7 +184,7 @@ export default function ContentForm({ initial, onDone }: { initial?: Content; on
 
       <div className="card">
         <h3>⚖️ Хууль, ёс зүйн мэдэгдэл (илгээхэд заавал)</h3>
-        <p className="muted" style={{ marginTop: 0 }}>Үндэслэл: <a href="/legal/journalists" target="_blank">сэтгүүлчид мөрдөх шаардлага</a>. Ивээн тэтгэсэн, ашиг сонирхлын мэдэгдэл уншигчид ил харагдана.</p>
+        <p className="muted" style={{ marginTop: 0 }}><a href="/legal/journalists" target="_blank">Шаардлага</a></p>
         {errs.compliance && <Alert>{errs.compliance}</Alert>}
         <label className="check-row consent"><input type="checkbox" checked={!!comp.facts_verified} onChange={tick("facts_verified")} />
           <span>Баримтыг шалгасан; санаатай худал, төөрөгдүүлсэн мэдээлэл агуулаагүй.</span></label>
@@ -229,8 +228,7 @@ export default function ContentForm({ initial, onDone }: { initial?: Content; on
             <button type="button" className="btn sm" onClick={applyAi}>Батлах</button>
           </div>
         )}
-        <p className="muted" style={{ marginTop: 0 }}>Шошго нь мэдээг <b>хайлт, шүүлтүүрт</b> олдуулах, <b>давхардсан мэдээ</b> илрүүлэх,
-          холбогдох <b>статистик үзүүлэлт, амлалттай</b> автоматаар тулгахад ашиглагдана. AI зөвхөн санал болгоно — та батлах, засах эрхтэй.</p>
+        <p className="muted" style={{ marginTop: 0 }}>Хайлт, давхардал, статистик тулгалтад ашиглана.</p>
         <div>{tags.map((t) => <span className="tag" key={t}>#{t}<button type="button" onClick={() => setTags(tags.filter((x) => x !== t))}>×</button></span>)}</div>
         <div className="row">
           <input placeholder="Шошго нэмэх" value={newTag} onChange={(e) => setNewTag(e.target.value)}
@@ -241,7 +239,6 @@ export default function ContentForm({ initial, onDone }: { initial?: Content; on
       <div className="card ai">
         <div className="row spread"><h3>Pulse Trust · илгээхээс өмнө өөрөө шалгах</h3>
           <button type="button" className="btn secondary sm" disabled={busy} onClick={precheck}>🛡 Шалгах</button></div>
-        <p className="muted">Давхардал, төстэй зураг, эх сурвалж, хувийн мэдээлэл, албан ёсны статистиктай тулгалтыг шалгана. Алдаагаа илгээхээс өмнө засвал батлагдах магадлал өснө.</p>
         {trust && <TrustCard v={trust} detailed />}
       </div>
 

@@ -4,6 +4,7 @@ import {
   type Content, type ContentStatus, type Membership, type Purchase, type RatingSummary,
 } from "@pulse/shared";
 import { useCallback, useEffect, useState } from "react";
+import { ApiError } from "@pulse/shared";
 
 interface Summary { content: Record<string, number>; content_total: number; members: number; pending: number; purchases: number; rating: RatingSummary }
 
@@ -71,7 +72,6 @@ function PurchasesTab() {
   useEffect(() => { api<Purchase[]>("/purchases/").then(setItems).catch(() => {}); }, []);
   return (
     <>
-      <p className="muted">Нийтлэгдсэн, үнэ тавьсан мэдээг мэдээний хуудаснаас «Худалдан авах» товчоор авна. Төлбөр одоогоор <b>ДЕМО</b> горимд — бодит мөнгө шилжихгүй.</p>
       {items.length === 0 && <p className="muted">Худалдан авалт алга.</p>}
       {items.map((p) => (
         <div key={p.id} className="card row spread">
@@ -88,24 +88,62 @@ export default function NewsroomDashboard() {
   const loadSummary = useCallback(() => api<Summary>("/newsroom/summary/").then(setS).catch(() => {}), []);
   useEffect(() => { if (user?.role === "newsroom") loadSummary(); }, [user, loadSummary]);
   return (
-    <RequireRole roles={["newsroom"]}>
+    <RequireRole roles={["newsroom"]}><div className="dash">
       <div className="page-head"><div><div className="eyebrow">Редакцын самбар</div><h1>{user?.full_name || user?.organization || "Редакц"}</h1></div>
         {user && <a className="btn secondary" href={`/newsrooms/${user.id}`}>Нийтийн хуудас</a>}</div>
       {user && !user.is_verified && <div className="alert info">Редакцын бүртгэл баталгаажаагүй байна. Админ баталгаажуулснаар нийтийн хуудсанд ✓ тэмдэг гарна.</div>}
       {s && (
-        <div className="grid" style={{ marginBottom: 20 }}>
+        <div className="kpis">
           <div className="card kpi-card"><div className="ico">📰</div><div className="muted">Ирсэн мэдээ</div><div className="stat">{s.content_total}</div><small className="muted">Нийтлэгдсэн {s.content.published ?? 0} · хянагдаж буй {s.content.under_review ?? 0}</small></div>
           <div className="card kpi-card"><div className="ico">👥</div><div className="muted">Сэтгүүлч</div><div className="stat">{s.members}</div><small className="muted">{s.pending} хүсэлт хүлээгдэж буй</small></div>
           <div className="card kpi-card"><div className="ico">⭐</div><div className="muted">Редакцын үнэлгээ</div><div className="stat">{s.rating.avg ?? "—"}</div><small className="muted">{s.rating.count} үнэлгээ</small></div>
           <div className="card kpi-card"><div className="ico">💳</div><div className="muted">Худалдан авсан</div><div className="stat">{s.purchases}</div><small className="muted">ДЕМО төлбөр</small></div>
         </div>
       )}
-      <div className="alert info">Танай <b>баталгаажсан</b> редакцын <b>гишүүн</b> сэтгүүлчид редакцаараа илгээсэн мэдээг та өөрөө шалгаж нийтэлнэ
-        («Шалгах →»). Хариуцлагыг хуулийн этгээд, хариуцлагатай эрхлэгч хүлээнэ. Pulse.mn нийтэлсний дараах хяналт (гомдол, залруулга, хууль зүйн нуулт) хийнэ.</div>
-      <Tabs tabs={[["content", `Ирсэн мэдээ${s?.content.under_review ? ` (${s.content.under_review})` : ""}`], ["members", `Сэтгүүлчид${s?.pending ? ` (${s.pending})` : ""}`], ["purchases", "Худалдан авалт"]]} value={tab} onChange={setTab} />
+      <Tabs tabs={[["content", `Ирсэн мэдээ${s?.content.under_review ? ` (${s.content.under_review})` : ""}`], ["members", `Сэтгүүлчид${s?.pending ? ` (${s.pending})` : ""}`], ["editors", "Редакторууд"], ["purchases", "Худалдан авалт"]]} value={tab} onChange={setTab} />
       {tab === "content" && <ContentTab />}
       {tab === "members" && <MembersTab onChange={loadSummary} />}
+      {tab === "editors" && <EditorsTab />}
       {tab === "purchases" && <PurchasesTab />}
-    </RequireRole>
+    </div></RequireRole>
+  );
+}
+
+interface Staff { id: number; email: string; full_name: string; is_active: boolean; last_login: string | null; decisions: number }
+
+/** Редакцын редакторууд: редакц өөрөө үүсгэж, идэвхгүй болгоно. Тэд «Шалгах жагсаалт»-аас танай мэдээг шалгана. */
+function EditorsTab() {
+  const [items, setItems] = useState<Staff[]>([]); const [f, setF] = useState({ email: "", full_name: "", password: "" });
+  const [err, setErr] = useState(""); const [ok, setOk] = useState("");
+  const load = useCallback(() => api<Staff[]>("/newsroom/editors/").then(setItems).catch(() => {}), []);
+  useEffect(() => { load(); }, [load]);
+  async function add() {
+    setErr(""); setOk("");
+    try { await api("/newsroom/editors/", { method: "POST", body: f }); setOk(`${f.email} нэмэгдлээ.`); setF({ email: "", full_name: "", password: "" }); load(); }
+    catch (x) { setErr(x instanceof ApiError ? x.message : "Нэмж чадсангүй."); }
+  }
+  async function toggle(u: Staff) { await api(`/newsroom/editors/${u.id}/active/`, { method: "POST", body: { active: !u.is_active } }); load(); }
+  return (
+    <div className="g-3">
+      <div className="card">
+        <h3>Редактор нэмэх</h3>
+        <input placeholder="Нэр" value={f.full_name} onChange={(e) => setF({ ...f, full_name: e.target.value })} style={{ width: "100%", marginBottom: 8 }} />
+        <input placeholder="Имэйл" type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} style={{ width: "100%", marginBottom: 8 }} />
+        <input placeholder="Анхны нууц үг (8+)" type="password" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} style={{ width: "100%", marginBottom: 8 }} />
+        <button className="btn sm" disabled={!f.email || !f.full_name || f.password.length < 8} onClick={add}>Нэмэх</button>
+        {err && <div className="alert error" style={{ marginTop: 8 }}>{err}</div>}{ok && <div className="alert ok" style={{ marginTop: 8 }}>{ok}</div>}
+      </div>
+      <div className="card span-2">
+        <h3>Редакторууд ({items.filter((u) => u.is_active).length})</h3>
+        {items.length === 0 && <p className="muted">Редактор алга.</p>}
+        {items.map((u) => (
+          <div key={u.id} className="list-row">
+            <div><b>{u.full_name}</b> <span className={`badge ${u.is_active ? "green" : "gray"}`}>{u.is_active ? "Идэвхтэй" : "Хаалттай"}</span>
+              <div className="muted">{u.email} · {u.decisions} шийдвэр · сүүлд {fmtDate(u.last_login)}</div></div>
+            <button className="btn secondary sm" onClick={() => toggle(u)}>{u.is_active ? "Хаах" : "Нээх"}</button>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
