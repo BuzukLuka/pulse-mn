@@ -16,6 +16,14 @@ class Politician(models.Model):
     province = models.ForeignKey("catalog.Province", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
     district = models.ForeignKey("catalog.District", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
     term_year = models.PositiveSmallIntegerField(help_text="Сонгуулийн он")
+    # parliament.mn-ээс импортолсон (УИХ-ын гишүүн): тойрог, сонгуулийн тогтолцоо, зураг
+    parliament_id = models.PositiveIntegerField(null=True, blank=True, unique=True)
+    photo_url = models.URLField(max_length=400, blank=True)
+    profile_url = models.URLField(max_length=400, blank=True)
+    constituency_number = models.PositiveSmallIntegerField(null=True, blank=True, db_index=True)
+    constituency_name = models.CharField(max_length=120, blank=True)
+    election_system = models.CharField(max_length=20, blank=True)  # MAJORITARIAN | PROPORTIONAL
+    votes = models.PositiveIntegerField(null=True, blank=True)
 
     class Meta:
         ordering = ["name"]
@@ -32,6 +40,12 @@ class Pledge(models.Model):
     source = models.CharField(max_length=300)
     source_url = models.URLField(blank=True)
     status = models.CharField(max_length=14, choices=PledgeStatus.choices, default=PledgeStatus.INSUFFICIENT, db_index=True)
+    # Admin тохируулна: хэрэгжих хугацаа, явцын хувь, байршил (газрын зураг дээр)
+    deadline = models.DateField(null=True, blank=True)
+    progress = models.PositiveSmallIntegerField(default=0)
+    lat = models.FloatField(null=True, blank=True)
+    lng = models.FloatField(null=True, blank=True)
+    location_name = models.CharField(max_length=200, blank=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL, related_name="+")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -67,3 +81,26 @@ class PledgeStatusHistory(models.Model):
 
     class Meta:
         ordering = ["-created_at", "-id"]
+
+
+class PledgeUpdate(models.Model):
+    """Иргэний оруулсан явцын мэдээ (зураг, байршил). AI урьдчилан шалгаж, админ баталгаажуулна."""
+    STATUSES = [("pending", "Шалгаж буй"), ("verified", "Баталгаажсан"), ("rejected", "Татгалзсан")]
+    pledge = models.ForeignKey(Pledge, on_delete=models.CASCADE, related_name="updates")
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="pledge_updates")
+    text = models.TextField(max_length=1500)
+    photo = models.FileField(upload_to="pledges/%Y/%m/", blank=True)
+    photo_sha256 = models.CharField(max_length=64, blank=True, db_index=True)
+    photo_phash = models.CharField(max_length=16, blank=True)
+    lat = models.FloatField(null=True, blank=True)
+    lng = models.FloatField(null=True, blank=True)
+    progress_claim = models.PositiveSmallIntegerField(null=True, blank=True)
+    status = models.CharField(max_length=10, choices=STATUSES, default="pending", db_index=True)
+    ai_check = models.JSONField(default=dict, blank=True)
+    review_note = models.CharField(max_length=500, blank=True)
+    reviewed_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]

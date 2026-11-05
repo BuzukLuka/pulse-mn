@@ -87,12 +87,22 @@ export interface PledgeStats {
 export interface Politician {
   id: number; name: string; position: string; party: string; province: number | null; province_name: string | null;
   district: number | null; term_year: number; stats: PledgeStats; pledges?: Pledge[];
+  parliament_id?: number | null; photo_url?: string; profile_url?: string; constituency_number?: number | null;
+  constituency_name?: string; election_system?: string; votes?: number | null;
+}
+export interface Constituency { constituency_number: number; constituency_name: string; members: number }
+export interface PledgeUpdate {
+  id: number; pledge: number; pledge_text: string; politician_name: string; text: string; photo_url: string;
+  lat: number | null; lng: number | null; progress_claim: number | null; status: "pending" | "verified" | "rejected";
+  ai_check: { score?: number; flags?: string[]; distance_km?: number | null; source?: string }; review_note: string;
+  author_name: string; created_at: string;
 }
 export interface Evidence { id: number; kind: string; source: string; date: string; url: string; note: string }
 export interface Pledge {
   id: number; politician: number; politician_name: string; text: string; category: number; category_name: string;
   source: string; source_url: string; status: PledgeStatus; status_label: string; evidence_count: number;
-  evidence?: Evidence[];
+  deadline: string | null; progress: number; lat: number | null; lng: number | null; location_name: string; updates_count: number;
+  created_at?: string; evidence?: Evidence[];
   history?: { id: number; old_status: PledgeStatus; new_status: PledgeStatus; reason: string; evidence: Evidence | null; changed_by_name?: string; created_at: string }[];
 }
 export interface Indicator {

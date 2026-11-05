@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Pledge, PledgeEvidence, PledgeStatusHistory, Politician
+from .models import Pledge, PledgeEvidence, PledgeStatusHistory, PledgeUpdate, Politician
 
 
 class EvidenceSerializer(serializers.ModelSerializer):
@@ -25,11 +25,21 @@ class PledgeSerializer(serializers.ModelSerializer):
     status_label = serializers.CharField(source="get_status_display", read_only=True)
     politician_name = serializers.CharField(source="politician.name", read_only=True)
     evidence_count = serializers.IntegerField(source="evidence.count", read_only=True)
+    updates_count = serializers.SerializerMethodField()
+
+    def get_updates_count(self, o):
+        return o.updates.filter(status="verified").count()
+
+    def validate_progress(self, v):
+        if not 0 <= v <= 100:
+            raise serializers.ValidationError("0–100.")
+        return v
 
     class Meta:
         model = Pledge
         fields = ["id", "politician", "politician_name", "text", "category", "category_name", "source",
-                  "source_url", "status", "status_label", "evidence_count", "created_at", "updated_at"]
+                  "source_url", "status", "status_label", "evidence_count", "created_at", "updated_at",
+                  "deadline", "progress", "lat", "lng", "location_name", "updates_count"]
         read_only_fields = ["status"]
 
 
@@ -48,7 +58,9 @@ class PoliticianSerializer(serializers.ModelSerializer):
     class Meta:
         model = Politician
         fields = ["id", "name", "position", "party", "province", "province_name", "district",
-                  "district_name", "term_year"]
+                  "district_name", "term_year", "parliament_id", "photo_url", "profile_url", "constituency_number",
+                  "constituency_name", "election_system", "votes"]
+        read_only_fields = ["parliament_id"]
         validators = []
 
     def validate(self, a):
@@ -59,3 +71,21 @@ class PoliticianSerializer(serializers.ModelSerializer):
         if qs.exists():
             raise serializers.ValidationError({"name": "Ийм улс төрч (нэр, албан тушаал, он) аль хэдийн бүртгэлтэй."})
         return a
+
+
+class PledgeUpdateSerializer(serializers.ModelSerializer):
+    photo_url = serializers.SerializerMethodField()
+    author_name = serializers.SerializerMethodField()
+    pledge_text = serializers.CharField(source="pledge.text", read_only=True)
+    politician_name = serializers.CharField(source="pledge.politician.name", read_only=True)
+
+    class Meta:
+        model = PledgeUpdate
+        fields = ["id", "pledge", "pledge_text", "politician_name", "text", "photo_url", "lat", "lng", "progress_claim",
+                  "status", "ai_check", "review_note", "author_name", "created_at"]
+
+    def get_photo_url(self, o):
+        return o.photo.url if o.photo else ""
+
+    def get_author_name(self, o):
+        return o.author.full_name or "Иргэн"

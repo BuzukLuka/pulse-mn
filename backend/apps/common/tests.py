@@ -729,3 +729,66 @@ class FeaturedTests(Base):
         self.client.post(f"/api/v1/review/{c.pk}/feature/", {"hours": 12}, format="json")
         self.assertFalse(self.client.post(f"/api/v1/review/{c.pk}/feature/", {"hours": 0}, format="json").data["is_featured"])
         self.assertTrue(Notification.objects.filter(user=self.j, title__contains="топоос буулаа").exists())
+
+
+# ---------- Амлалт: тойрог, иргэний явцын мэдээ, импорт ----------
+class PledgeProgressTests(Base):
+    def setUp(self):
+        from apps.pledges.models import Pledge, Politician
+        self.pol = Politician.objects.create(name="Б.Бат", position="УИХ-ын гишүүн", term_year=2024, parliament_id=99,
+                                             constituency_number=12, constituency_name="Хан-Уул", election_system="MAJORITARIAN")
+        self.pl = Pledge.objects.create(politician=self.pol, text="120 хүүхдийн цэцэрлэг барина", category=Category.objects.get(slug="education"),
+                                        source="Мөрийн хөтөлбөр", lat=47.9, lng=106.9)
+
+    def test_constituency_filter_and_list(self):
+        r = self.client.get("/api/v1/pledges/politicians/constituencies/")
+        self.assertEqual(r.data[0]["constituency_name"], "Хан-Уул")
+        self.assertEqual(len(self.client.get("/api/v1/pledges/politicians/?constituency=12").data), 1)
+        self.assertEqual(len(self.client.get("/api/v1/pledges/politicians/?constituency=3").data), 0)
+
+    def test_admin_sets_deadline_progress_location(self):
+        self.login(self.citizen)
+        self.assertEqual(self.client.patch(f"/api/v1/pledges/{self.pl.pk}/", {"progress": 40}, format="json").status_code, 403)
+        self.login(self.admin)
+        r = self.client.patch(f"/api/v1/pledges/{self.pl.pk}/", {"deadline": "2027-09-01", "progress": 40, "location_name": "Хан-Уул 15-р хороо"}, format="json")
+        self.assertEqual((r.data["deadline"], r.data["progress"]), ("2027-09-01", 40))
+        self.assertEqual(self.client.patch(f"/api/v1/pledges/{self.pl.pk}/", {"progress": 140}, format="json").status_code, 400)
+
+    def test_citizen_update_ai_check_and_verify(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from io import BytesIO
+        from PIL import Image
+        buf = BytesIO(); Image.new("RGB", (64, 64), (200, 30, 30)).save(buf, "JPEG")
+        url = f"/api/v1/pledges/{self.pl.pk}/updates/"
+        self.assertEqual(self.client.post(url, {"text": "Барилга эхэлсэн"}, format="multipart").status_code, 401)
+        self.login(self.citizen)
+        r = self.client.post(url, {"text": "Цэцэрлэгийн барилгын суурь цутгаж, хана өрж эхэлсэн байна.", "lat": "48.5", "lng": "106.9",
+                                   "progress": "30", "photo": SimpleUploadedFile("a.jpg", buf.getvalue(), "image/jpeg")}, format="multipart")
+        self.assertEqual(r.status_code, 201, r.content)
+        self.assertTrue(any("км зайтай" in f for f in r.data["ai_check"]["flags"]))
+        uid = r.data["id"]
+        # давхар зураг
+        r2 = self.client.post(url, {"text": "Дахин ижил зураг оруулж байна шүү дээ.", "photo": SimpleUploadedFile("b.jpg", buf.getvalue(), "image/jpeg")}, format="multipart")
+        self.assertIn("Яг ижил зураг өмнө нь оруулагдсан", r2.data["ai_check"]["flags"])
+        self.assertEqual(self.client.get(url).data, [])            # баталгаажаагүй нь нийтэд харагдахгүй
+        self.login(self.admin)
+        self.assertEqual(len(self.client.get("/api/v1/admin/pledge-updates/").data["results"]), 2)
+        self.client.post(f"/api/v1/admin/pledge-updates/{uid}/review/", {"approve": True, "note": "Зураг тохирч байна", "progress": 30}, format="json")
+        self.login(None)
+        self.assertEqual(len(self.client.get(url).data), 1)
+        self.assertEqual(self.client.get(f"/api/v1/pledges/{self.pl.pk}/").data["progress"], 30)
+        self.assertTrue(Notification.objects.filter(user=self.citizen, title__contains="баталгаажлаа").exists())
+
+    def test_import_parliament(self):
+        from apps.pledges.management.commands import import_parliament as imp
+        from apps.pledges.models import Politician
+        lst = {"members": [{"id": 5, "first_name": "Номин", "last_name": "Бат", "profile_image": "https://parliament.mn/p.jpg",
+                            "party": {"name": "Ардчилсан нам"}}]}
+        det = {"short_name": "Б.Номин", "election_results": [{"constituency_number": 3, "constituency_name": "Архангай",
+               "election_system": "MAJORITARIAN", "votes_received": 12345}]}
+        resp = mock.Mock(json=mock.Mock(return_value=lst))
+        with mock.patch.object(imp.requests, "get", return_value=resp), mock.patch.object(imp, "detail", return_value=det):
+            call_command("import_parliament", verbosity=0)
+            call_command("import_parliament", verbosity=0)   # дахин ажиллуулахад давхардахгүй
+        p = Politician.objects.get(parliament_id=5)
+        self.assertEqual((p.name, p.constituency_name, p.votes, p.profile_url), ("Б.Номин", "Архангай", 12345, "https://parliament.mn/member/5"))

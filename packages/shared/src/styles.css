@@ -424,3 +424,22 @@ input[type=file]::file-selector-button{border-radius:6px}
   .topbar.open .dd-menu{display:flex;position:static;box-shadow:none;border:0;padding:0 0 0 14px;min-width:0}
   .topbar.open .dd-menu::before{display:none}
 }
+
+/* ---------- Амлалт: газрын зураг, явц, хугацааны шугам ---------- */
+.pledge-map { width: 100%; border: 1px solid var(--line, #e5e7eb); border-radius: 8px; overflow: hidden; background: #f3f4f6; }
+.map-pin { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.35);
+  color: #fff; font: 700 10px/22px var(--font-manrope, sans-serif); text-align: center; cursor: pointer; }
+.maplibregl-popup-content { font: 13px/1.45 var(--font-manrope, sans-serif); max-width: 240px; }
+.prog { height: 8px; background: #eef0f3; border-radius: 99px; overflow: hidden; }
+.prog > span { display: block; height: 100%; border-radius: 99px; }
+.tl { position: relative; height: 34px; margin: 6px 0 2px; }
+.tl .line { position: absolute; top: 12px; left: 0; right: 0; height: 2px; background: #e5e7eb; }
+.tl .done { position: absolute; top: 12px; left: 0; height: 2px; background: #111; }
+.tl .tick { position: absolute; top: 6px; width: 2px; height: 14px; background: #111; }
+.tl .tick.today { background: #e11d48; }
+.tl .lbl { position: absolute; top: 20px; font-size: 11px; color: var(--muted, #6b7280); white-space: nowrap; transform: translateX(-50%); }
+.tl .lbl.l { transform: none; } .tl .lbl.r { transform: translateX(-100%); }
+.member { display: flex; gap: 12px; align-items: flex-start; }
+.member img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; background: #f3f4f6; flex: none; }
+.upd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+.upd-grid img { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 6px; background: #f3f4f6; }

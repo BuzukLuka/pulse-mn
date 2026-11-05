@@ -2,13 +2,14 @@ from django.db.models import Q
 from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 
 from apps.catalog.models import Category
 from apps.common.permissions import roles
 from . import services
-from .models import Pledge, Politician
-from .serializers import PledgeDetailSerializer, PledgeSerializer, PoliticianSerializer
+from .models import Pledge, PledgeUpdate, Politician
+from .serializers import PledgeDetailSerializer, PledgeSerializer, PledgeUpdateSerializer, PoliticianSerializer
 
 WRITE = roles("editor", "admin")
 
@@ -18,7 +19,7 @@ class PoliticianViewSet(viewsets.ModelViewSet):
     pagination_class = None
 
     def get_permissions(self):
-        return [permissions.AllowAny()] if self.action in ("list", "retrieve", "compare") else [WRITE()]
+        return [permissions.AllowAny()] if self.action in ("list", "retrieve", "compare", "constituencies") else [WRITE()]
 
     def get_queryset(self):
         qs = Politician.objects.select_related("province", "district")
@@ -31,9 +32,21 @@ class PoliticianViewSet(viewsets.ModelViewSet):
             qs = qs.filter(district_id=p["district"])
         if p.get("term_year"):
             qs = qs.filter(term_year=p["term_year"])
+        if p.get("constituency"):
+            qs = qs.filter(constituency_number=p["constituency"])
+        if p.get("system"):
+            qs = qs.filter(election_system=p["system"])
         if p.get("category"):
             qs = qs.filter(pledges__category_id=p["category"]).distinct()
-        return qs
+        return qs.order_by("constituency_number", "name")
+
+    @action(detail=False, methods=["get"])
+    def constituencies(self, request):
+        """Тойргууд (parliament.mn-ийн сонгуулийн үр дүнгээс)."""
+        from django.db.models import Count
+        rows = (Politician.objects.filter(constituency_number__isnull=False).values("constituency_number", "constituency_name")
+                .annotate(members=Count("id")).order_by("constituency_number"))
+        return Response(list(rows))
 
     def _card(self, pol):
         return {**PoliticianSerializer(pol).data, "stats": services.percentages(pol.pledges.all())}
@@ -52,10 +65,29 @@ class PoliticianViewSet(viewsets.ModelViewSet):
         return Response([self._card(p) for p in Politician.objects.filter(pk__in=ids)])
 
 
+class AdminPledgeUpdateViewSet(viewsets.ReadOnlyModelViewSet):
+    """Иргэний явцын мэдээг шалгах дараалал."""
+    permission_classes = [WRITE]
+    serializer_class = PledgeUpdateSerializer
+
+    def get_queryset(self):
+        qs = PledgeUpdate.objects.select_related("pledge", "pledge__politician", "author")
+        return qs.filter(status=self.request.query_params.get("status", "pending"))
+
+    @action(detail=True, methods=["post"])
+    def review(self, request, pk=None):
+        progress = request.data.get("progress")
+        upd = services.review_update(request.user, self.get_object(), bool(request.data.get("approve")),
+                                     str(request.data.get("note", "")), int(progress) if str(progress or "").isdigit() else None)
+        return Response(self.get_serializer(upd).data)
+
+
 class PledgeViewSet(viewsets.ModelViewSet):
     pagination_class = None
 
     def get_permissions(self):
+        if self.action == "updates":
+            return [permissions.AllowAny()] if self.request.method == "GET" else [permissions.IsAuthenticated()]
         return [permissions.AllowAny()] if self.action in ("list", "retrieve", "summary") else [WRITE()]
 
     def get_serializer_class(self):
@@ -70,6 +102,8 @@ class PledgeViewSet(viewsets.ModelViewSet):
             qs = qs.filter(category_id=p["category"])
         if p.get("status"):
             qs = qs.filter(status=p["status"])
+        if p.get("constituency"):
+            qs = qs.filter(politician__constituency_number=p["constituency"])
         return qs
 
     def perform_create(self, serializer):
@@ -89,6 +123,25 @@ class PledgeViewSet(viewsets.ModelViewSet):
             if sub.exists():
                 by_cat.append({"category": c.name, **services.percentages(sub)})
         return Response({"overall": services.percentages(qs), "by_category": by_cat})
+
+    @action(detail=True, methods=["get", "post"], url_path="updates",
+            parser_classes=[MultiPartParser, FormParser, JSONParser])
+    def updates(self, request, pk=None):
+        """GET: баталгаажсан явцын мэдээ (нийтэд). POST: нэвтэрсэн иргэн зураг, байршилтай мэдээ оруулна."""
+        pledge = self.get_object()
+        if request.method == "GET":
+            qs = pledge.updates.filter(status="verified").select_related("author")
+            return Response(PledgeUpdateSerializer(qs, many=True).data)
+        d = request.data
+
+        def num(k, cast=float):
+            try:
+                return cast(d.get(k)) if d.get(k) not in (None, "") else None
+            except (TypeError, ValueError):
+                return None
+        upd = services.submit_update(pledge, request.user, str(d.get("text", "")), request.FILES.get("photo"),
+                                     num("lat"), num("lng"), num("progress", int))
+        return Response(PledgeUpdateSerializer(upd).data, status=201)
 
     @action(detail=True, methods=["post"], url_path="update-status")
     def update_status(self, request, pk=None):

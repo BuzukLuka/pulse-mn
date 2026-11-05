@@ -24,6 +24,8 @@ def run(request):
     step = request.GET.get("step")
     if step == "migrate":
         call_command("migrate", interactive=False, stdout=out, verbosity=1)
+    elif step == "import_parliament":
+        call_command("import_parliament", stdout=out)
     elif step == "seed":
         call_command("seed_test", news=int(request.GET.get("news", 120)), only=request.GET.get("only", ""), stdout=out)
     else:
