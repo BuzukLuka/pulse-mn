@@ -6,6 +6,8 @@ from pathlib import Path
 from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
+from datetime import timedelta
+
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
@@ -224,7 +226,59 @@ def send_to_newsroom(content, actor, newsroom):
     return content
 
 
+FEATURE_HOURS = (6, 12, 24, 48, 72)
+
+
+def can_feature(user, content):
+    """Топ болгох эрх: редакц өөрийн редакцын мэдээнд, редакцын редактор мөн, Pulse.mn редактор ба админ бүх мэдээнд."""
+    if user.role == "admin" or (user.role == "editor" and not user.newsroom_org_id):
+        return True
+    if user.role == "newsroom":
+        return content.newsroom_id == user.pk
+    return user.role == "editor" and content.newsroom_id == user.newsroom_org_id
+
+
+@transaction.atomic
+def request_feature(content, journalist, hours):
+    if content.status != Status.PUBLISHED:
+        raise Conflict("Зөвхөн нийтлэгдсэн мэдээг топ болгох хүсэлт илгээнэ.")
+    if hours not in FEATURE_HOURS:
+        raise Unprocessable("Хугацаа: 6, 12, 24, 48, 72 цагийн аль нэг.")
+    content.feature_request_hours = hours
+    content.save(update_fields=["feature_request_hours", "updated_at"])
+    audit.log(journalist, "content.feature_request", "content", content.pk, None, {"hours": hours})
+    title = f"Топ мэдээ болгох хүсэлт ({hours} цаг)"
+    if content.newsroom_id:
+        for u in [content.newsroom, *content.newsroom.staff.filter(role="editor", is_active=True)]:
+            notify(u, title, content.title, content.pk)
+    else:
+        notify_editors(title, content.title, content.pk)
+    return content
+
+
+@transaction.atomic
+def set_featured(content, actor, hours):
+    """hours=0 бол топоос буулгана."""
+    if not can_feature(actor, content):
+        raise Unprocessable("Энэ мэдээг топ болгох эрхгүй.")
+    if content.status != Status.PUBLISHED:
+        raise Conflict("Зөвхөн нийтлэгдсэн мэдээ топ болно.")
+    if hours and hours not in FEATURE_HOURS:
+        raise Unprocessable("Хугацаа: 6, 12, 24, 48, 72 цагийн аль нэг.")
+    before = content.featured_until.isoformat() if content.featured_until else None
+    content.featured_until = timezone.now() + timedelta(hours=hours) if hours else None
+    content.featured_by = actor if hours else None
+    content.feature_request_hours = None
+    content.save(update_fields=["featured_until", "featured_by", "feature_request_hours", "updated_at"])
+    audit.log(actor, "content.feature" if hours else "content.unfeature", "content", content.pk,
+              {"featured_until": before}, {"hours": hours})
+    notify(content.author, f"Таны мэдээ {hours} цаг топ мэдээ боллоо" if hours else "Таны мэдээ топоос буулаа",
+           content.title, content.pk)
+    return content
+
+
 HISTORY_LABELS = {
+    "content.feature": "Топ мэдээ болсон", "content.unfeature": "Топоос буулгасан", "content.feature_request": "Топ хүсэлт илгээсэн",
     "content.send_newsroom": "Редакцад илгээсэн", "content.correction": "Залруулга нэмсэн",
     "content.submit": "Шалгалтад илгээсэн", "content.approve": "Нийтлэгдсэн", "content.return": "Засварт буцаасан",
     "content.reject": "Татгалзсан", "content.hide": "Түр нуусан", "content.restore": "Сэргээсэн",

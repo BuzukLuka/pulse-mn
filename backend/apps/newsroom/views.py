@@ -157,6 +157,13 @@ class NewsroomDashboardViewSet(viewsets.ViewSet):
                         request.data.get("checklist"))
         return Response(ContentSerializer(obj, context={"request": request}).data)
 
+    @action(detail=False, methods=["post"], url_path=r"content/(?P<cid>\d+)/feature")
+    def content_feature(self, request, cid=None):
+        from apps.content import services as cs
+        from apps.content.views import _hours
+        obj = cs.set_featured(self._own(request, cid), request.user, _hours(request))
+        return Response(ContentSerializer(obj, context={"request": request}).data)
+
     @action(detail=False, methods=["post"], url_path=r"content/(?P<cid>\d+)/ai-check")
     def content_ai_check(self, request, cid=None):
         from apps.ai.checks import run_checks

@@ -3,6 +3,7 @@ import {
   Alert, api, ApiError, fmtDate, PERSONAL_DATA, RequireRole, StatusBadge, Tabs, TrustCard, type Content, type Correction, type Role, type Verification,
 } from "@pulse/shared";
 import { useParams } from "next/navigation";
+import FeatureControl from "@/components/FeatureControl";
 import { useEffect, useMemo, useState } from "react";
 
 const DECISIONS = [["approve", "Зөвшөөрөх (нийтлэх)", "ok"], ["return", "Засварт буцаах", "secondary"], ["reject", "Татгалзах", "danger"]] as const;
@@ -134,6 +135,7 @@ export default function ReviewPanel({ base, back, roles, who }: { base: string; 
           <button className="btn" onClick={submit} disabled={busy}>Шийдвэр баталгаажуулах</button>
         </div>
       ) : c.review_reason && <div className="card"><b>Шийдвэрийн шалтгаан:</b> {c.review_reason}</div>}
+      {c.status === "published" && (c.can_decide ?? true) && <FeatureControl c={c} url={`${base}/${c.id}/feature/`} mode="decide" onDone={() => load()} />}
       {c.status === "published" && (c.can_decide ?? true) && <CorrectionForm base={base} id={c.id} items={c.corrections ?? []} onDone={load} />}
     </RequireRole>
   );

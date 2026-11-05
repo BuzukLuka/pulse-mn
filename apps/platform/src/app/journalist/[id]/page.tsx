@@ -3,6 +3,7 @@ import { Alert, api, ApiError, fmtDate, fmtDateTime, RequireRole, StatusBadge, T
 import { useParams, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import ContentForm from "@/components/ContentForm";
+import FeatureControl from "@/components/FeatureControl";
 
 function Inner() {
   const { id } = useParams<{ id: string }>(); const sent = useSearchParams().get("sent");
@@ -43,6 +44,7 @@ function Inner() {
           {sendErr && <Alert>{sendErr}</Alert>}
         </div>
       )}
+      {c.status === "published" && <FeatureControl c={c} url={`/content/${c.id}/feature-request/`} mode="request" onDone={setC} />}
       {hist.length > 0 && <div className="card"><h3>Төлвийн түүх</h3><Timeline items={hist} /></div>}
       {!editable && c.verification && <TrustCard v={c.verification} detailed />}
       {editable ? (

@@ -57,6 +57,10 @@ class Content(models.Model):
     # Хэн шалгаж нийтлэх вэ: баталгаажсан редакцын гишүүн сэтгүүлч редакцаараа илгээвэл редакц өөрөө,
     # бусад тохиолдолд Pulse.mn-ийн редактор. Илгээх үед тогтоогдоно (services.review_route).
     review_by = models.CharField(max_length=10, default="pulse", db_index=True)
+    # Топ мэдээ: редакц эсвэл редактор тодорхой хугацаагаар нүүрний дээд хэсэгт гаргана; сэтгүүлч хүсэлт гаргана
+    featured_until = models.DateTimeField(null=True, blank=True, db_index=True)
+    featured_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    feature_request_hours = models.PositiveSmallIntegerField(null=True, blank=True)
     title = models.CharField(max_length=250)
     body = models.TextField(blank=True)
     category = models.ForeignKey("catalog.Category", null=True, blank=True, on_delete=models.PROTECT)

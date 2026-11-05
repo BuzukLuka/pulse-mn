@@ -27,6 +27,8 @@ function ContentTab() {
             {c.review_reason && <div className="muted">Редакторын тайлбар: {c.review_reason}</div>}
           </div>
           <div className="row">{c.verification?.score != null && <span className="badge blue">Trust {c.verification.score}</span>}<StatusBadge status={c.status} />
+            {c.is_featured && <span className="badge green">⭐ Топ</span>}
+            {!c.is_featured && c.feature_request_hours && <span className="badge amber">Топ хүсэлт · {c.feature_request_hours}ц</span>}
             {c.review_by === "newsroom"
               ? <a className={`btn sm ${c.status === "under_review" ? "" : "secondary"}`} href={`/newsroom/review/${c.id}`}>{c.status === "under_review" ? "Шалгах →" : "Нээх"}</a>
               : <span className="badge gray" title="Гишүүн бус эсвэл баталгаажаагүй үед Pulse.mn шалгана">Pulse шалгана</span>}</div>

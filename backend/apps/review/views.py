@@ -50,6 +50,13 @@ class ReviewViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(self.get_serializer(obj).data)
 
     @action(detail=True, methods=["post"])
+    def feature(self, request, pk=None):
+        """Топ мэдээ болгох / буулгах (hours=0)."""
+        from apps.content.views import _hours
+        obj = services.set_featured(self.get_object(), request.user, _hours(request))
+        return Response(self.get_serializer(obj).data)
+
+    @action(detail=True, methods=["post"])
     def corrections(self, request, pk=None):
         """Залруулга / хариу тайлбар нийтлэх."""
         from apps.content.serializers import CorrectionSerializer

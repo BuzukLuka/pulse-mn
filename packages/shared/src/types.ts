@@ -54,6 +54,7 @@ export interface Content {
   versions?: ContentVersion[]; checklist_items?: { key: string; label: string; required: boolean }[];
   newsroom?: number | null; newsroom_name?: string | null; price?: number;
   compliance?: Compliance; corrections?: Correction[]; review_by?: "pulse" | "newsroom"; can_decide?: boolean;
+  is_featured?: boolean; featured_until?: string | null; feature_request_hours?: number | null;
   disclosure?: { sponsored: boolean; political_ad: boolean; sponsor_name: string; conflict_of_interest: string };
   id: number; title: string; body: string;
   category: number | null; category_name: string | null; category_slug: string | null;

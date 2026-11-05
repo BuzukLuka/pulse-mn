@@ -32,6 +32,11 @@ class ContentSerializer(serializers.ModelSerializer):
     pledge_items = serializers.SerializerMethodField()
     status_label = serializers.CharField(source="get_status_display", read_only=True)
     corrections = CorrectionSerializer(many=True, read_only=True)
+    is_featured = serializers.SerializerMethodField()
+
+    def get_is_featured(self, obj):
+        from django.utils import timezone
+        return bool(obj.featured_until and obj.featured_until > timezone.now())
     newsroom_name = serializers.SerializerMethodField()
 
     class Meta:
@@ -43,11 +48,11 @@ class ContentSerializer(serializers.ModelSerializer):
             "review_reason", "reviewed_at", "submitted_at", "published_at", "created_at",
             "updated_at", "author", "author_name", "media", "content_type", "event_time",
             "location_detail", "license", "copyright_declared", "verification", "review_checklist",
-            "pledges", "pledge_items", "newsroom", "newsroom_name", "price", "compliance", "corrections", "review_by",
+            "pledges", "pledge_items", "newsroom", "newsroom_name", "price", "compliance", "corrections", "review_by", "featured_until", "feature_request_hours", "is_featured",
         ]
         read_only_fields = ["status", "review_reason", "reviewed_at", "submitted_at", "published_at",
                             "ai_summary", "ai_suggestion", "ai_review", "author", "verification",
-                            "review_checklist", "review_by"]
+                            "review_checklist", "review_by", "featured_until", "feature_request_hours"]
 
     def get_pledge_items(self, obj):
         return [{"id": p.pk, "text": p.text[:140], "politician": p.politician.name, "politician_id": p.politician_id}

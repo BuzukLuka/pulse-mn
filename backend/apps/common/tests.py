@@ -696,3 +696,36 @@ class NewsFilterTests(Base):
         self.assertEqual(ids("?c=politics"), [old.pk])
         self.assertEqual(ids("?fresh=24"), [new.pk])
         self.assertEqual(sorted(ids("?fresh=bad")), [new.pk])
+
+
+# ---------- Топ мэдээ ----------
+class FeaturedTests(Base):
+    def test_journalist_requests_newsroom_decides(self):
+        from apps.newsroom.models import Membership
+        Membership.objects.create(newsroom=self.nr, journalist=self.j, status="active")
+        c = self.published(newsroom=self.nr)
+        self.login(self.j)
+        self.assertEqual(self.client.post(f"/api/v1/content/{c.pk}/feature-request/", {"hours": 5}, format="json").status_code, 422)
+        self.assertEqual(self.client.post(f"/api/v1/content/{c.pk}/feature-request/", {"hours": 24}, format="json").data["feature_request_hours"], 24)
+        self.assertTrue(Notification.objects.filter(user=self.nr, title__contains="Топ мэдээ болгох хүсэлт").exists())
+        self.login(self.nr2)  # өөр редакц
+        self.assertEqual(self.client.post(f"/api/v1/newsroom/content/{c.pk}/feature/", {"hours": 24}, format="json").status_code, 404)
+        self.login(self.nr)
+        r = self.client.post(f"/api/v1/newsroom/content/{c.pk}/feature/", {"hours": 24}, format="json")
+        self.assertTrue(r.data["is_featured"])
+        self.assertIsNone(r.data["feature_request_hours"])
+        self.login(None)
+        self.assertEqual([x["id"] for x in self.client.get("/api/v1/news/?featured=1").data["results"]], [c.pk])
+
+    def test_pulse_editor_features_independent_and_expiry(self):
+        from datetime import timedelta
+        c = self.published()
+        self.login(self.citizen)
+        self.assertEqual(self.client.post(f"/api/v1/review/{c.pk}/feature/", {"hours": 6}, format="json").status_code, 403)
+        self.login(self.editor)
+        self.assertTrue(self.client.post(f"/api/v1/review/{c.pk}/feature/", {"hours": 6}, format="json").data["is_featured"])
+        Content.objects.filter(pk=c.pk).update(featured_until=timezone.now() - timedelta(minutes=1))  # хугацаа дууссан
+        self.assertEqual(self.client.get("/api/v1/news/?featured=1").data["count"], 0)
+        self.client.post(f"/api/v1/review/{c.pk}/feature/", {"hours": 12}, format="json")
+        self.assertFalse(self.client.post(f"/api/v1/review/{c.pk}/feature/", {"hours": 0}, format="json").data["is_featured"])
+        self.assertTrue(Notification.objects.filter(user=self.j, title__contains="топоос буулаа").exists())

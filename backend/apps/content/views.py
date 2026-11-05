@@ -16,6 +16,13 @@ from .serializers import ContentSerializer, MediaSerializer, PublicContentSerial
 EDITABLE = {Status.DRAFT, Status.CHANGES_REQUESTED}
 
 
+def _hours(request):
+    try:
+        return int(request.data.get("hours", 0))
+    except (TypeError, ValueError):
+        return -1
+
+
 class MyContentViewSet(viewsets.ModelViewSet):
     """UC-01: Сэтгүүлч контент оруулах, засах, шалгалтад илгээх."""
     permission_classes = [roles("journalist")]
@@ -78,6 +85,11 @@ class MyContentViewSet(viewsets.ModelViewSet):
         Content.objects.filter(pk=obj.pk).update(verification=result)
         return Response(result)
 
+    @action(detail=True, methods=["post"], url_path="feature-request")
+    def feature_request(self, request, pk=None):
+        obj = services.request_feature(self.get_object(), request.user, _hours(request))
+        return Response(self.get_serializer(obj).data)
+
     @action(detail=True, methods=["post"], url_path="send-to-newsroom")
     def send_to_newsroom(self, request, pk=None):
         obj = services.send_to_newsroom(self.get_object(), request.user, request.data.get("newsroom"))
@@ -134,6 +146,9 @@ class PublicNewsViewSet(viewsets.ReadOnlyModelViewSet):
         for key in ("province", "district", "category"):
             if p.get(key):
                 qs = qs.filter(**{f"{key}_id": p[key]})
+        if p.get("featured"):  # одоо идэвхтэй топ мэдээ
+            from django.utils import timezone
+            return qs.filter(featured_until__gt=timezone.now()).order_by("-featured_until")
         if p.get("c"):
             qs = qs.filter(category__slug=p["c"])
         if p.get("fresh"):  # «Шуурхай»: сүүлийн N цагт нийтлэгдсэн

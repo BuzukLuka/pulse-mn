@@ -58,6 +58,7 @@ export default function Home() {
 
   return (
     <>
+      <TopStories />
       <section className="hero">
         <svg className="pulse-line" viewBox="0 0 640 160" fill="none" aria-hidden>
           <path d="M0 90h180l22-58 34 112 30-96 20 42h70l16-30 18 30h250" stroke="#e8432a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
@@ -150,6 +151,23 @@ function WorldStrip() {
           <h3 style={{ margin: 0, fontSize: 15.5 }}>{a.title_mn || a.title}</h3>
           <small className="muted">{fmtDate(a.published_at)} · эх сурвалж ↗</small>
         </a>))}</div>
+    </section>
+  );
+}
+
+/** Редакц / редакторын тавьсан топ мэдээ (хугацаа дуустал нүүрний хамгийн дээр). */
+function TopStories() {
+  const [items, setItems] = useState<Content[]>([]);
+  useEffect(() => { api<Paginated<Content>>("/news/?featured=1", { auth: false }).then((d) => setItems(d.results)).catch(() => {}); }, []);
+  if (!items.length) return null;
+  const [lead, ...rest] = items;
+  return (
+    <section style={{ marginBottom: 22 }}>
+      <div className="eyebrow">⭐ Топ мэдээ</div>
+      <div className={rest.length ? "featured" : ""}>
+        <NewsCard c={lead} lead />
+        {rest.length > 0 && <div className="side-list">{rest.slice(0, 3).map((c) => <SideItem key={c.id} c={c} />)}</div>}
+      </div>
     </section>
   );
 }

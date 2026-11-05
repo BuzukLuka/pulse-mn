@@ -4,8 +4,8 @@ import { Manrope, Unbounded } from "next/font/google";
 import type { ReactNode } from "react";
 import Providers from "@/components/Providers";
 
-const body = Manrope({ subsets: ["latin", "cyrillic"], variable: "--font-manrope", display: "swap" });
-const display = Unbounded({ subsets: ["latin", "cyrillic"], variable: "--font-unbounded", display: "swap" });
+const body = Manrope({ subsets: ["latin", "cyrillic", "cyrillic-ext"], variable: "--font-manrope", display: "swap" });
+const display = Unbounded({ subsets: ["latin", "cyrillic", "cyrillic-ext"], variable: "--font-unbounded", display: "swap" });
 
 export const metadata: Metadata = { title: "Pulse.mn — Админ самбар", robots: { index: false, follow: false } };
 export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#0e1220" };
