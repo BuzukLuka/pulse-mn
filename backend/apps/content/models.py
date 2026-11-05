@@ -119,6 +119,20 @@ class Correction(models.Model):
         ordering = ["created_at"]
 
 
+class Comment(models.Model):
+    """Нийтлэгдсэн мэдээний сэтгэгдэл. Иргэн нэрээ нууцалж болно — бусдад «Нэргүй иргэн» гэж харагдах ч
+    платформ бичсэн хүнийг мэдэж байна (хуулийн хариуцлага, гомдол шийдвэрлэх)."""
+    content = models.ForeignKey(Content, on_delete=models.CASCADE, related_name="comments")
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="comments")
+    text = models.TextField(max_length=1000)
+    is_anonymous = models.BooleanField(default=False)
+    is_hidden = models.BooleanField(default=False)  # админ нуусан
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+
 class ContentVersion(models.Model):
     """Шалгалтад илгээх бүрийн агшин — редактор «өмнөх хувилбартай харьцуулах»-д ашиглана."""
     content = models.ForeignKey(Content, on_delete=models.CASCADE, related_name="versions")

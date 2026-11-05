@@ -647,3 +647,39 @@ class JournalistTopicsTests(Base):
         self.assertEqual(card["published"], 4)
         prof = self.client.get(f"/api/v1/journalists/{self.j.pk}/").data
         self.assertEqual(prof["topics"][0]["slug"], "economy")
+
+
+# ---------- Сэтгэгдэл, нэр нууцлах ----------
+class CommentTests(Base):
+    def test_anonymous_citizen_comment(self):
+        c = self.published()
+        self.assertEqual(self.client.post("/api/v1/comments/", {"content": c.pk, "text": "Сайн мэдээ"}, format="json").status_code, 401)
+        self.login(self.citizen)
+        r = self.client.post("/api/v1/comments/", {"content": c.pk, "text": "Манай сумын асуудал үнэн.", "is_anonymous": True}, format="json")
+        self.assertEqual(r.status_code, 201, r.content)
+        self.login(None)
+        d = self.client.get(f"/api/v1/comments/?content={c.pk}").data["results"][0]
+        self.assertEqual(d["author_name"], "Нэргүй иргэн")
+        self.assertNotIn("author", d)
+
+    def test_only_citizen_can_be_anonymous_and_published_only(self):
+        c = self.published()
+        self.login(self.j)
+        self.assertEqual(self.client.post("/api/v1/comments/", {"content": c.pk, "text": "x y", "is_anonymous": True}, format="json").status_code, 422)
+        self.assertEqual(self.client.post("/api/v1/comments/", {"content": c.pk, "text": "Баярлалаа"}, format="json").data["author_name"], "Сэтгүүлч")
+        draft = Content.objects.create(author=self.j, title="Ноорог", body=BODY)
+        self.assertEqual(self.client.post("/api/v1/comments/", {"content": draft.pk, "text": "x y"}, format="json").status_code, 400)
+
+    def test_rate_limit_delete_and_admin_hide(self):
+        c = self.published()
+        self.login(self.citizen)
+        ids = [self.client.post("/api/v1/comments/", {"content": c.pk, "text": f"Сэтгэгдэл {i}"}, format="json").data["id"] for i in range(5)]
+        self.assertEqual(self.client.post("/api/v1/comments/", {"content": c.pk, "text": "Зургаа дахь"}, format="json").status_code, 422)
+        self.login(self.j)
+        self.assertEqual(self.client.delete(f"/api/v1/comments/{ids[0]}/").status_code, 403)
+        self.login(self.citizen)
+        self.assertEqual(self.client.delete(f"/api/v1/comments/{ids[0]}/").status_code, 204)
+        self.login(self.admin)
+        self.assertEqual(self.client.delete(f"/api/v1/comments/{ids[1]}/").status_code, 204)
+        self.assertTrue(AuditLog.objects.filter(action="comment.hide").exists())
+        self.assertEqual(self.client.get(f"/api/v1/comments/?content={c.pk}").data["count"], 3)

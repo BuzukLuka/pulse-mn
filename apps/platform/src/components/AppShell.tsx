@@ -2,6 +2,19 @@
 import { api, initials, Shell, useAuth } from "@pulse/shared";
 import { useEffect, useState, type ReactNode } from "react";
 
+type Item = { href: string; label: string };
+const L = (href: string, label: string): Item => ({ href, label });
+
+/** Үүрэг бүрт зөвхөн өөрт хамаатай цэс. */
+const NAV: Record<string, Item[]> = {
+  guest: [L("/", "Мэдээ"), L("/world", "Дэлхийд"), L("/stats", "Статистик"), L("/pledges", "Амлалт"), L("/journalists", "Сэтгүүлчид"), L("/newsrooms", "Редакцууд")],
+  citizen: [L("/", "Мэдээ"), L("/world", "Дэлхийд"), L("/stats", "Статистик"), L("/pledges", "Амлалт"), L("/me", "Миний хэсэг"), L("/complaints", "Гомдол")],
+  journalist: [L("/journalist", "Миний контент"), L("/journalist/new", "Шинэ контент"), L("/newsrooms", "Редакцууд"), L("/", "Мэдээ"), L("/profile", "Профайл")],
+  newsroom: [L("/newsroom", "Редакцын самбар"), L("/journalists", "Сэтгүүлчид"), L("/", "Мэдээ"), L("/world", "Дэлхийд"), L("/profile", "Профайл")],
+  editor: [L("/editor", "Шалгах жагсаалт"), L("/", "Мэдээ"), L("/profile", "Профайл")],
+  admin: [L("/editor", "Шалгах жагсаалт"), L("/", "Мэдээ"), L("/complaints", "Гомдол")],
+};
+
 export default function AppShell({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
   const [unread, setUnread] = useState(0);
@@ -11,19 +24,12 @@ export default function AppShell({ children }: { children: ReactNode }) {
     api<{ count: number }>("/notifications/unread_count/").then((d) => setUnread(d.count)).catch(() => {});
   }, [user]);
 
-  const nav = [{ href: "/", label: "Мэдээ" }, { href: "/stats", label: "Статистик" }, { href: "/pledges", label: "Амлалт" },
-    { href: "/world", label: "Дэлхийд" }, { href: "/journalists", label: "Сэтгүүлчид" }, { href: "/newsrooms", label: "Редакцууд" }];
-  if (user?.role === "journalist") nav.push({ href: "/journalist", label: "Миний контент" });
-  if (user?.role === "editor" || user?.role === "admin") nav.push({ href: "/editor", label: "Шалгах жагсаалт" });
-  if (user?.role === "newsroom") nav.push({ href: "/newsroom", label: "Редакцын самбар" });
-  if (user?.role === "citizen") nav.push({ href: "/me", label: "Миний хэсэг" });
-  if (user) nav.push({ href: "/complaints", label: "Гомдол" });
+  const nav = NAV[user?.role ?? "guest"] ?? NAV.guest;
 
   return (
     <Shell nav={nav} right={
       user ? (
         <>
-          {user.role === "journalist" && <a className="btn sm" href="/journalist/new">+ Шинэ контент</a>}
           <a href="/notifications" aria-label="Мэдэгдэл" className="btn ghost sm" style={{ position: "relative" }}>
             🔔{unread > 0 && <span className="badge red" style={{ position: "absolute", top: -4, right: -6, padding: "0 6px" }}>{unread}</span>}
           </a>

@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import ComplaintForm from "@/components/ComplaintForm";
 import PurchaseBox from "@/components/PurchaseBox";
+import Comments from "@/components/Comments";
 
 export default function NewsDetail() {
   const { id } = useParams<{ id: string }>();
@@ -51,6 +52,7 @@ export default function NewsDetail() {
         {c.disclosure?.conflict_of_interest && <p className="muted" style={{ marginTop: 20 }}><b>Ашиг сонирхлын мэдэгдэл:</b> {c.disclosure.conflict_of_interest}</p>}
         <p className="muted" style={{ marginTop: 28 }}><b>Эх сурвалж:</b> {c.source}</p>
         <div>{c.tags.map((t) => <span className="tag" key={t}>#{t}</span>)}</div>
+        <Comments contentId={c.id} />
       </div>
       <aside>
         {c.trust && <TrustCard pub={c.trust} />}
