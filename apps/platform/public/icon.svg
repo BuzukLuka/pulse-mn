@@ -1,0 +1,13 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="pulse" x1="15" y1="10" x2="112" y2="118" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF583B"/>
+      <stop offset="1" stop-color="#C91F25"/>
+    </linearGradient>
+  </defs>
+  <path d="M27 108V28c0-8 6-14 14-14h36c24 0 39 15 39 36S101 87 77 87H57v21H27Z" fill="url(#pulse)"/>
+  <path d="M57 87V57h18c8 0 13-4 13-10s-5-10-13-10H57" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M36 62h17l8-17 12 34 9-20 6 7h9" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M27 108l21-21h9v21H27Z" fill="#A91E28"/>
+</svg>

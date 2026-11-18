@@ -19,20 +19,59 @@ export function Field({ label, error, children }: { label: string; error?: strin
 export const Alert = ({ tone = "error", children }: { tone?: "error" | "ok" | "info"; children: ReactNode }) =>
   <div className={`alert ${tone}`}>{children}</div>;
 
-/** Зүрхний цохилтын шугам — брэндийн гол дүрс. */
-export const PulseMark = ({ size = 20, color = "#fff" }: { size?: number; color?: string }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-    <path d="M2 12h4l2.5-6 4 12 3-9 2 3H22" />
+
+/** Pulse.mn — өвөрмөц P + мэдээллийн урсгалын тэмдэг */
+export const PulseMark = ({
+  size = 38,
+  color = "#fff",
+}: {
+  size?: number;
+  color?: string;
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 48 48"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <rect width="48" height="48" rx="12" fill="url(#pulseGradient)" />
+    <defs>
+      <linearGradient id="pulseGradient" x1="4" y1="2" x2="44" y2="46">
+        <stop stopColor="#FF6044" />
+        <stop offset="1" stopColor="#C92725" />
+      </linearGradient>
+    </defs>
+    <path
+      d="M14 36V11H25C32 11 36 15 36 21C36 27 32 30 25 30H14"
+      stroke={color}
+      strokeWidth="4.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M8 24H17L21 18L26 32L30 22L33 26H40"
+      stroke={color}
+      strokeWidth="2.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
   </svg>
 );
 
 export const Logo = ({ tag }: { tag?: string }) => (
   <a className="brand" href="/">
-    <span className="mark"><PulseMark /></span>
-    <span>Pulse<span className="dotmn">.mn</span></span>
+    <span className="mark">
+      <PulseMark size={38} />
+    </span>
+    <span>
+      Pulse<span className="dotmn">.mn</span>
+    </span>
     {tag && <small>{tag}</small>}
   </a>
 );
+
 
 export type NavItem = { href: string; label: string; children?: NavItem[] };
 
