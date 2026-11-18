@@ -2,7 +2,7 @@
 import { ApiError, Alert, AuthFrame, Field, useAuth } from "@pulse/shared";
 import { useState, type FormEvent, type ReactNode } from "react";
 
-const ROLES: [string, string, string][] = [["journalist", "✍️", "Сэтгүүлч"], ["newsroom", "🏢", "Редакци"], ["citizen", "🙋", "Иргэн"]];
+const ROLES: [string, string, string][] = [["journalist", "", "Сэтгүүлч"], ["newsroom", "", "Редакци"], ["citizen", "", "Иргэн"]];
 
 export default function Register() {
   const { register } = useAuth();
@@ -28,7 +28,7 @@ export default function Register() {
   );
   return (
     <AuthFrame title="Орон нутгийн дуу хоолой бол." text="Өөрийн аймаг, сумын болж буй үйл явдлыг баримттайгаар олон нийтэд хүргэ."
-      points={[["🗺️", "21 аймаг, бүх сумын мэдээ"], ["🛡️", "Pulse Trust — баримт шалгах AI давхарга"], ["⚖️", "Хууль, ёс зүйн шаардлагыг маягт дээр нь тусгасан"]]}>
+      points={[["", "21 аймаг, бүх сумын мэдээ"], ["", "Pulse Trust — баримт шалгах AI давхарга"], ["", "Хууль, ёс зүйн шаардлагыг маягт дээр нь тусгасан"]]}>
       <form onSubmit={submit}>
         <h1>Бүртгүүлэх</h1>
         <p className="muted" style={{ marginTop: 0, marginBottom: 24 }}>Бүртгэлтэй юу? <a href="/login">Нэвтрэх</a></p>

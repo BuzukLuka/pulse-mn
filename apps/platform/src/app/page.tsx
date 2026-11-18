@@ -13,7 +13,7 @@ function NewsCard({ c, lead }: { c: Content; lead?: boolean }) {
       <div className="body">
         <h3>{c.title}</h3>
         <p className="muted">{summaryOf(c, lead ? 260 : 160)}</p>
-        <div className="meta"><span>📍 {c.province_name ?? "—"}</span><span>{fmtDate(c.published_at ?? c.event_date)}</span></div>
+        <div className="meta"><span> {c.province_name ?? "—"}</span><span>{fmtDate(c.published_at ?? c.event_date)}</span></div>
       </div>
     </a>
   );
@@ -74,7 +74,7 @@ export default function Home() {
         <div className="hero-stats">
           <div><b>{data?.count ?? "—"}</b><span>Баталгаажсан мэдээ</span></div>
           <div><b>{provinces.length || "21"}</b><span>Аймаг, нийслэл</span></div>
-          <div><b>AI + 👤</b><span>Давхар шалгалт</span></div>
+          <div><b>AI</b><span>Давхар шалгалт</span></div>
         </div>
       </section>
 
@@ -88,7 +88,7 @@ export default function Home() {
           ))}
         </div>
         <select aria-label="Аймаг" value={province} onChange={(e) => { setProvince(e.target.value); setPage(1); }}>
-          <option value="">📍 Бүх аймаг</option>{provinces.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          <option value=""> Бүх аймаг</option>{provinces.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
       </div>
 
@@ -142,7 +142,7 @@ function WorldStrip() {
   if (!items.length) return null;
   return (
     <section style={{ marginTop: 36 }}>
-      <div className="row spread"><h2 style={{ margin: 0 }}>🌍 Дэлхийд Монголын тухай</h2><a href="/world">Бүгдийг харах →</a></div>
+      <div className="row spread"><h2 style={{ margin: 0 }}> Дэлхийд Монголын тухай</h2><a href="/world">Бүгдийг харах →</a></div>
       <div className="grid">{items.map((a) => (
         <a key={a.id} href={a.url} target="_blank" rel="noopener noreferrer" className="card world-card">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -163,7 +163,7 @@ function TopStories() {
   const [lead, ...rest] = items;
   return (
     <section style={{ marginBottom: 22 }}>
-      <div className="eyebrow">⭐ Топ мэдээ</div>
+      <div className="eyebrow"> Топ мэдээ</div>
       <div className={rest.length ? "featured" : ""}>
         <NewsCard c={lead} lead />
         {rest.length > 0 && <div className="side-list">{rest.slice(0, 3).map((c) => <SideItem key={c.id} c={c} />)}</div>}
