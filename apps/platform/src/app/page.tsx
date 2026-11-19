@@ -38,7 +38,7 @@ function NewsCard({ c, lead }: { c: Content; lead?: boolean }) {
         <p className="muted">{summaryOf(c, lead ? 260 : 160)}</p>
 
         <div className="meta">
-          <span>📍 {c.province_name ?? "—"}</span>
+          <span>{c.province_name ?? "—"}</span>
           <span>{fmtDate(c.published_at ?? c.event_date)}</span>
         </div>
       </div>
@@ -206,7 +206,7 @@ export default function Home() {
           </div>
 
           <div>
-            <b>AI + 👤</b>
+            <b>AI</b>
             <span>Давхар шалгалт</span>
           </div>
         </div>
@@ -256,7 +256,7 @@ export default function Home() {
             setPage(1);
           }}
         >
-          <option value="">📍 Бүх аймаг</option>
+          <option value="">Бүх аймаг</option>
           {provinces.map((p) => (
             <option key={p.id} value={p.id}>
               {p.name}
@@ -390,7 +390,7 @@ function WorldStrip() {
   return (
     <section style={{ marginTop: 36 }}>
       <div className="row spread">
-        <h2 style={{ margin: 0 }}>🌍 Дэлхийд Монголын тухай</h2>
+        <h2 style={{ margin: 0 }}>Дэлхийд Монголын тухай</h2>
         <a href="/world">Бүгдийг харах →</a>
       </div>
 
@@ -452,7 +452,7 @@ function TopStories() {
 
   return (
     <section style={{ marginBottom: 22 }}>
-      <div className="eyebrow">⭐ Топ мэдээ</div>
+      <div className="eyebrow">Топ мэдээ</div>
 
       <div className={rest.length ? "featured" : ""}>
         <NewsCard c={lead} lead />
