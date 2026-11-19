@@ -24,11 +24,15 @@ class PledgeSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source="category.name", read_only=True)
     status_label = serializers.CharField(source="get_status_display", read_only=True)
     politician_name = serializers.CharField(source="politician.name", read_only=True)
-    evidence_count = serializers.IntegerField(source="evidence.count", read_only=True)
+    evidence_count = serializers.SerializerMethodField()
     updates_count = serializers.SerializerMethodField()
 
+    # Жагсаалтад annotate хийсэн тоог хэрэглэнэ (N+1 query-гүй); бусад үед ДБ-ээс тоолно
+    def get_evidence_count(self, o):
+        return o.n_evidence if hasattr(o, "n_evidence") else o.evidence.count()
+
     def get_updates_count(self, o):
-        return o.updates.filter(status="verified").count()
+        return o.n_updates if hasattr(o, "n_updates") else o.updates.filter(status="verified").count()
 
     def validate_progress(self, v):
         if not 0 <= v <= 100:

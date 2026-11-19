@@ -16,7 +16,8 @@ class ReviewViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         qs = Content.objects.exclude(status=Status.DRAFT).select_related(
-            "category", "province", "district", "author").prefetch_related("media")
+            "category", "province", "district", "author", "newsroom").prefetch_related(
+            "media", "corrections", "pledges__politician")
         u = self.request.user
         if u.role == "editor" and u.newsroom_org_id:
             qs = qs.filter(review_by="newsroom", newsroom_id=u.newsroom_org_id)  # зөвхөн өөрийн редакцынх

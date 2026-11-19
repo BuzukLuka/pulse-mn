@@ -188,7 +188,8 @@ class NewsroomDashboardViewSet(viewsets.ViewSet):
     def content(self, request):
         """Харьяа сэтгүүлчдийн редакцаар дамжуулж илгээсэн мэдээ (ноорог харагдахгүй)."""
         qs = Content.objects.filter(newsroom=request.user).exclude(status=Status.DRAFT).select_related(
-            "category", "province", "district", "author").prefetch_related("media").order_by("-submitted_at")
+            "category", "province", "district", "author", "newsroom").prefetch_related(
+            "media", "corrections", "pledges__politician").order_by("-submitted_at")
         if request.query_params.get("status"):
             qs = qs.filter(status=request.query_params["status"])
         return Response(ContentSerializer(qs[:100], many=True, context={"request": request}).data)

@@ -56,7 +56,7 @@ class ContentSerializer(serializers.ModelSerializer):
 
     def get_pledge_items(self, obj):
         return [{"id": p.pk, "text": p.text[:140], "politician": p.politician.name, "politician_id": p.politician_id}
-                for p in obj.pledges.select_related("politician")]
+                for p in obj.pledges.all()]  # prefetch (pledges__politician) ашиглана
 
     def get_newsroom_name(self, obj):
         n = obj.newsroom

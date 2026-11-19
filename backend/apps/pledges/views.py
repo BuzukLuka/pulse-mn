@@ -52,7 +52,14 @@ class PoliticianViewSet(viewsets.ModelViewSet):
         return {**PoliticianSerializer(pol).data, "stats": services.percentages(pol.pledges.all())}
 
     def list(self, request, *args, **kwargs):
-        return Response([self._card(p) for p in self.get_queryset()])
+        """Бүх гишүүний төлвийн тоог нэг query-гоор (өмнө нь гишүүн бүрт тусдаа query — 137 query)."""
+        from django.db.models import Count
+        pols = list(self.get_queryset())
+        by = {}
+        for r in Pledge.objects.filter(politician__in=[p.pk for p in pols]).values("politician_id", "status").annotate(n=Count("id")):
+            by.setdefault(r["politician_id"], {})[r["status"]] = r["n"]
+        data = PoliticianSerializer(pols, many=True).data
+        return Response([{**d, "stats": services.percentages(counts=by.get(p.pk, {}))} for d, p in zip(data, pols)])
 
     def retrieve(self, request, *args, **kwargs):
         pol = self.get_object()
@@ -94,7 +101,12 @@ class PledgeViewSet(viewsets.ModelViewSet):
         return PledgeDetailSerializer if self.action == "retrieve" else PledgeSerializer
 
     def get_queryset(self):
-        qs = Pledge.objects.select_related("politician", "category").prefetch_related("evidence", "history")
+        from django.db.models import Count, Q as _Q
+        qs = (Pledge.objects.select_related("politician", "category")
+              .annotate(n_evidence=Count("evidence", distinct=True),
+                        n_updates=Count("updates", filter=_Q(updates__status="verified"), distinct=True)))
+        if self.action == "retrieve":
+            qs = qs.prefetch_related("evidence", "history", "history__evidence", "history__changed_by")
         p = self.request.query_params
         if p.get("politician"):
             qs = qs.filter(politician_id=p["politician"])

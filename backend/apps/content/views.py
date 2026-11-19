@@ -31,7 +31,8 @@ class MyContentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = Content.objects.filter(author=self.request.user).select_related(
-            "category", "province", "district", "author").prefetch_related("media")
+            "category", "province", "district", "author", "newsroom").prefetch_related(
+            "media", "corrections", "pledges__politician")
         if self.request.query_params.get("status"):
             qs = qs.filter(status=self.request.query_params["status"])
         return qs
@@ -149,7 +150,8 @@ class PublicNewsViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         qs = Content.objects.filter(status=Status.PUBLISHED).select_related(
-            "category", "province", "district", "author").prefetch_related("media")
+            "category", "province", "district", "author", "newsroom").prefetch_related(
+            "media", "corrections", "pledges__politician")
         p = self.request.query_params
         if p.get("q"):
             qs = qs.filter(Q(title__icontains=p["q"]) | Q(body__icontains=p["q"])
@@ -183,8 +185,8 @@ class AdminContentViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ContentSerializer
 
     def get_queryset(self):
-        qs = Content.objects.select_related("category", "province", "district", "author") \
-            .prefetch_related("media")
+        qs = Content.objects.select_related("category", "province", "district", "author", "newsroom") \
+            .prefetch_related("media", "corrections", "pledges__politician")
         p = self.request.query_params
         if p.get("status"):
             qs = qs.filter(status=p["status"])

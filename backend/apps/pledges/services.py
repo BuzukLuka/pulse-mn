@@ -6,11 +6,16 @@ from apps.common.exceptions import Unprocessable
 from .models import PledgeUpdate, PledgeEvidence, PledgeStatus, PledgeStatusHistory
 
 
-def percentages(qs):
-    """Биелэлтийн хувь. «Мэдээлэл дутуу» амлалтыг үндсэн тооцооноос хасна."""
-    counts = {s.value: 0 for s in PledgeStatus}
-    for st in qs.values_list("status", flat=True):
-        counts[st] += 1
+def percentages(qs=None, counts=None):
+    """Биелэлтийн хувь. «Мэдээлэл дутуу» амлалтыг үндсэн тооцооноос хасна.
+    counts өгвөл ДБ-д хандахгүй (жагсаалтад нэг query-гоор бүх гишүүнийх тооцогдоно)."""
+    base_counts = {s.value: 0 for s in PledgeStatus}
+    if counts is None:
+        counts = dict(base_counts)
+        for st in qs.values_list("status", flat=True):
+            counts[st] += 1
+    else:
+        counts = {**base_counts, **counts}
     total = sum(counts.values())
     base = total - counts["insufficient"]
     pct = lambda n: round(100 * n / base, 1) if base else None

@@ -813,3 +813,20 @@ class ViewsAndBulkTests(Base):
         self.assertEqual(self.client.post("/api/v1/notifications/read-many/", {"ids": ids[:1]}, format="json").data["updated"], 1)
         self.assertEqual(self.client.post("/api/v1/notifications/read-many/", {}, format="json").data["updated"], 2)
         self.assertEqual(self.client.get("/api/v1/notifications/unread_count/").data["count"], 0)
+
+
+# ---------- Гүйцэтгэл: жагсаалтын query тоо өсөхгүй (N+1-ээс сэргийлэх) ----------
+class QueryCountTests(Base):
+    def test_list_endpoints_constant_queries(self):
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+        from apps.pledges.models import Pledge, Politician
+        cat = Category.objects.first()
+        for i in range(15):
+            pol = Politician.objects.create(name=f"Гишүүн {i}", position="УИХ-ын гишүүн", term_year=2024)
+            Pledge.objects.create(politician=pol, text=f"Амлалт {i}", category=cat, source="Мөрийн хөтөлбөр")
+            self.published(title=f"Мэдээ {i}")
+        for url, limit in [("/api/v1/pledges/politicians/", 3), ("/api/v1/pledges/", 2), ("/api/v1/news/?page=1", 6)]:
+            with CaptureQueriesContext(connection) as q:
+                self.assertEqual(self.client.get(url).status_code, 200)
+            self.assertLessEqual(len(q.captured_queries), limit, url)
