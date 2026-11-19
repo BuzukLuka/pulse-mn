@@ -112,6 +112,8 @@ class MyContentViewSet(viewsets.ModelViewSet):
         out = {s.value: 0 for s in Status}
         out.update({r["status"]: r["n"] for r in rows})
         out["total"] = sum(out.values())
+        from django.db.models import Sum
+        out["views"] = Content.objects.filter(author=request.user).aggregate(v=Sum("views"))["v"] or 0
         return Response(out)
 
     @action(detail=False, methods=["post"], url_path="suggest-tags")
@@ -135,6 +137,15 @@ class PublicNewsViewSet(viewsets.ReadOnlyModelViewSet):
     """Нийтэд харагдах, зөвхөн шалгагдаж нийтлэгдсэн мэдээ (FR-017)."""
     permission_classes = [permissions.AllowAny]
     serializer_class = PublicContentSerializer
+
+    def retrieve(self, request, *args, **kwargs):
+        """Мэдээ нээгдэх бүрт хандалт +1 (зохиогч өөрөө үзэхэд тоолохгүй)."""
+        from django.db.models import F
+        obj = self.get_object()
+        if obj.author_id != getattr(request.user, "pk", None):
+            Content.objects.filter(pk=obj.pk).update(views=F("views") + 1)
+            obj.views += 1
+        return Response(self.get_serializer(obj).data)
 
     def get_queryset(self):
         qs = Content.objects.filter(status=Status.PUBLISHED).select_related(

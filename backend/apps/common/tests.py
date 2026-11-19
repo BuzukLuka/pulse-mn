@@ -792,3 +792,24 @@ class PledgeProgressTests(Base):
             call_command("import_parliament", verbosity=0)   # дахин ажиллуулахад давхардахгүй
         p = Politician.objects.get(parliament_id=5)
         self.assertEqual((p.name, p.constituency_name, p.votes, p.profile_url), ("Б.Номин", "Архангай", 12345, "https://parliament.mn/member/5"))
+
+
+# ---------- Хандалт, мэдэгдэл бүгдийг сонгох ----------
+class ViewsAndBulkTests(Base):
+    def test_views_counted_except_author(self):
+        c = self.published()
+        self.client.get(f"/api/v1/news/{c.pk}/"); self.client.get(f"/api/v1/news/{c.pk}/")
+        self.login(c.author); self.client.get(f"/api/v1/news/{c.pk}/")
+        c.refresh_from_db(); self.assertEqual(c.views, 2)
+        self.assertEqual(self.client.get("/api/v1/content/summary/").data["views"], 2)
+        self.assertEqual(self.client.get(f"/api/v1/content/{c.pk}/").data["views"], 2)
+
+    def test_notifications_read_many(self):
+        from apps.notifications.services import notify
+        for i in range(3):
+            notify(self.citizen, f"М{i}", "x")
+        self.login(self.citizen)
+        ids = list(Notification.objects.filter(user=self.citizen).values_list("pk", flat=True))
+        self.assertEqual(self.client.post("/api/v1/notifications/read-many/", {"ids": ids[:1]}, format="json").data["updated"], 1)
+        self.assertEqual(self.client.post("/api/v1/notifications/read-many/", {}, format="json").data["updated"], 2)
+        self.assertEqual(self.client.get("/api/v1/notifications/unread_count/").data["count"], 0)

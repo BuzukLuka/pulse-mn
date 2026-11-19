@@ -13,8 +13,26 @@ export const ROLE_LABEL: Record<Role, string> = {
   citizen: "Иргэн", admin: "Администратор",
 };
 export const VERDICT_LABEL = { ok: "Хэвийн", needs_attention: "Анхаарах зүйлтэй", risky: "Эрсдэлтэй" } as const;
-export const fmtDate = (s?: string | null) => (s ? new Date(s).toLocaleDateString("mn-MN") : "—");
-export const fmtDateTime = (s?: string | null) => (s ? new Date(s).toLocaleString("mn-MN") : "—");
+/** Бүх огноо, цагийг Улаанбаатарын цагаар (UTC+8), «2026.11.19 14:05» хэлбэрээр. */
+export const TZ = "Asia/Ulaanbaatar";
+const parts = (s: string, time: boolean) => {
+  const d = /^\d{4}-\d{2}-\d{2}$/.test(s) ? new Date(`${s}T12:00:00+08:00`) : new Date(s);
+  if (isNaN(d.getTime())) return null;
+  const o = Object.fromEntries(new Intl.DateTimeFormat("en-GB", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit",
+    ...(time ? { hour: "2-digit", minute: "2-digit", hour12: false } : {}) }).formatToParts(d).map((p) => [p.type, p.value]));
+  return `${o.year}.${o.month}.${o.day}${time ? ` ${o.hour === "24" ? "00" : o.hour}:${o.minute}` : ""}`;
+};
+export const fmtDate = (s?: string | null) => (s ? parts(s, false) ?? "—" : "—");
+export const fmtDateTime = (s?: string | null) => (s ? parts(s, true) ?? "—" : "—");
+/** «5 минутын өмнө» маягийн харьцангуй хугацаа. */
+export const fmtAgo = (s?: string | null) => {
+  if (!s) return "—";
+  const m = Math.round((Date.now() - new Date(s).getTime()) / 60000);
+  if (m < 1) return "Саяхан";
+  if (m < 60) return `${m} минутын өмнө`;
+  if (m < 24 * 60) return `${Math.round(m / 60)} цагийн өмнө`;
+  return fmtDateTime(s);
+};
 
 export const PLEDGE_LABEL: Record<PledgeStatus, string> = {
   fulfilled: "Биелсэн", in_progress: "Хэрэгжиж байгаа", not_fulfilled: "Биелээгүй", insufficient: "Мэдээлэл дутуу",

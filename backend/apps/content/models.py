@@ -61,6 +61,7 @@ class Content(models.Model):
     featured_until = models.DateTimeField(null=True, blank=True, db_index=True)
     featured_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
     feature_request_hours = models.PositiveSmallIntegerField(null=True, blank=True)
+    views = models.PositiveIntegerField(default=0)  # нийтэд нээгдсэн тоо (сэтгүүлч хандалтаа харна)
     title = models.CharField(max_length=250)
     body = models.TextField(blank=True)
     category = models.ForeignKey("catalog.Category", null=True, blank=True, on_delete=models.PROTECT)

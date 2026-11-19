@@ -47,6 +47,7 @@ export interface PublicTrust {
 }
 export interface ContentVersion { id: number; number: number; title: string; body: string; source: string; tags: string[]; created_at: string }
 export interface Content {
+  views?: number;
   content_type?: string; event_time?: string | null; location_detail?: string; license?: string;
   copyright_declared?: boolean; verification?: Verification | null; trust?: PublicTrust;
   review_checklist?: Record<string, boolean> | null; pledges?: number[];

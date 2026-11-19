@@ -75,8 +75,23 @@ function Sales() {
 export default function MyContent() {
   const [items, setItems] = useState<Content[]>([]); const [loaded, setLoaded] = useState(false);
   const [sum, setSum] = useState<Record<string, number> | null>(null); const [filter, setFilter] = useState("");
-  useEffect(() => { api<Record<string, number>>("/content/summary/").then(setSum).catch(() => {}); }, []);
-  useEffect(() => { api<Paginated<Content>>(`/content/${filter ? `?status=${filter}` : ""}`).then((d) => setItems(d.results)).finally(() => setLoaded(true)); }, [filter]);
+  const [sel, setSel] = useState<number[]>([]); const [msg, setMsg] = useState(""); const [busy, setBusy] = useState(false);
+  const loadSum = () => api<Record<string, number>>("/content/summary/").then(setSum).catch(() => {});
+  const loadItems = useCallback(() => api<Paginated<Content>>(`/content/${filter ? `?status=${filter}` : ""}`).then((d) => setItems(d.results)).finally(() => setLoaded(true)), [filter]);
+  useEffect(() => { loadSum(); }, []);
+  useEffect(() => { setSel([]); loadItems(); }, [loadItems]);
+  const all = items.length > 0 && sel.length === items.length;
+  const toggle = (id: number) => setSel((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+  const picked = items.filter((c) => sel.includes(c.id));
+  const sendable = picked.filter((c) => c.status === "draft" || c.status === "changes_requested");
+  const deletable = picked.filter((c) => c.status === "draft");
+  /** Сонгосон контент дээр нэг үйлдлийг дараалан хийнэ; амжилтгүйг тоолж мэдэгдэнэ. */
+  async function bulk(list: Content[], run: (c: Content) => Promise<unknown>, label: string) {
+    setBusy(true); setMsg(""); let ok = 0; const bad: string[] = [];
+    for (const c of list) { try { await run(c); ok++; } catch (x) { bad.push(`«${c.title || c.id}»: ${x instanceof ApiError ? x.message : "алдаа"}`); } }
+    setMsg(`${label}: ${ok} амжилттай${bad.length ? ` · ${bad.length} амжилтгүй — ${bad.join("; ")}` : ""}`);
+    setSel([]); setBusy(false); loadItems(); loadSum();
+  }
   return (
     <RequireRole roles={["journalist"]}><div className="dash">
       <div className="page-head"><h1>Миний контент</h1><a className="btn" href="/journalist/new">+ Шинэ контент</a></div>
@@ -87,6 +102,7 @@ export default function MyContent() {
           <div className="card kpi-card"><div className="muted">Шалгалтад</div><div className="stat">{sum.under_review ?? 0}</div></div>
           <div className="card kpi-card"><div className="muted">Засвар хэрэгтэй</div><div className="stat">{sum.changes_requested ?? 0}</div></div>
           <div className="card kpi-card"><div className="muted">Нийтлэгдсэн</div><div className="stat">{sum.published ?? 0}</div></div>
+          <div className="card kpi-card"><div className="muted">Нийт хандалт</div><div className="stat">{(sum.views ?? 0).toLocaleString()}</div></div>
         </div>
       )}
       <div className="g-2"><NewsroomCard /><Sales /></div>
@@ -96,13 +112,31 @@ export default function MyContent() {
           {(Object.keys(STATUS_LABEL) as ContentStatus[]).map((k) => <button key={k} className={`pill ${filter === k ? "on" : ""}`} onClick={() => setFilter(k)}>{STATUS_LABEL[k]} {sum[k] ?? 0}</button>)}
         </div>
       )}
+      {items.length > 0 && (
+        <div className="card row spread">
+          <label className="check-row" style={{ margin: 0 }}>
+            <input type="checkbox" checked={all} ref={(el) => { if (el) el.indeterminate = sel.length > 0 && !all; }}
+              onChange={() => setSel(all ? [] : items.map((c) => c.id))} /> Бүгдийг сонгох {sel.length > 0 && <span className="muted">({sel.length})</span>}
+          </label>
+          <div className="row" style={{ gap: 6 }}>
+            <button className="btn sm" disabled={busy || !sendable.length}
+              onClick={() => bulk(sendable, (c) => api(`/content/${c.id}/submit/`, { method: "POST" }), "Шалгалтад илгээсэн")}>Шалгалтад илгээх ({sendable.length})</button>
+            <button className="btn ghost sm" disabled={busy || !deletable.length}
+              onClick={() => window.confirm(`${deletable.length} ноорог устгах уу?`) && bulk(deletable, (c) => api(`/content/${c.id}/`, { method: "DELETE" }), "Устгасан")}>Ноорог устгах ({deletable.length})</button>
+          </div>
+        </div>
+      )}
+      {msg && <Alert tone="ok">{msg}</Alert>}
       {loaded && items.length === 0 && <p className="muted">Контент алга. Эхний мэдээгээ оруулаарай.</p>}
       {items.map((c) => (
-        <a key={c.id} href={`/journalist/${c.id}`} className="card row spread" style={{ color: "inherit" }}>
-          <div><b>{c.title || "(гарчиггүй)"}</b><div className="muted">{c.province_name} · {fmtDate(c.created_at)}{c.newsroom_name ? ` · 🏢 ${c.newsroom_name}` : ""}{c.price ? ` · ${fmtMoney(c.price)}` : ""}</div>
-            {c.status === "changes_requested" && <div className="error">Редакторын тайлбар: {c.review_reason}</div>}</div>
-          <StatusBadge status={c.status} />
-        </a>
+        <div key={c.id} className="card row spread" style={{ alignItems: "flex-start" }}>
+          <input type="checkbox" checked={sel.includes(c.id)} onChange={() => toggle(c.id)} style={{ marginTop: 4 }} aria-label="Сонгох" />
+          <a href={`/journalist/${c.id}`} style={{ color: "inherit", flex: 1, textDecoration: "none" }}>
+            <b>{c.title || "(гарчиггүй)"}</b><div className="muted">{c.province_name} · {fmtDate(c.created_at)}{c.newsroom_name ? ` · 🏢 ${c.newsroom_name}` : ""}{c.price ? ` · ${fmtMoney(c.price)}` : ""}</div>
+            {c.status === "changes_requested" && <div className="error">Редакторын тайлбар: {c.review_reason}</div>}</a>
+          <div style={{ textAlign: "right" }}><StatusBadge status={c.status} />
+            {c.status === "published" && <div className="muted" style={{ fontSize: 13, marginTop: 4 }}>👁 {(c.views ?? 0).toLocaleString()} хандалт</div>}</div>
+        </div>
       ))}
     </div></RequireRole>
   );
