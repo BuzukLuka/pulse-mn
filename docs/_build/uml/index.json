@@ -1,0 +1,162 @@
+[
+ {
+  "key": "uc_journalist",
+  "title": "Use case — Сэтгүүлч",
+  "png": "C:\\Users\\Asus\\Desktop\\Busuk-Brain\\pulse-mn\\docs\\_build\\uml\\uc_journalist.png",
+  "size": [
+   1506,
+   1960
+  ],
+  "mermaid": "flowchart LR\n  classDef actor fill:#fff,stroke:#0c2430,stroke-width:2px,color:#0c2430,font-weight:bold\n  classDef uc fill:#e2f0f2,stroke:#0f6f7c,color:#0c2430\n  classDef ext fill:#eeebfa,stroke:#5b4bb7,color:#0c2430\n  A0([\"Сэтгүүлч\"]):::actor\n  subgraph S[Pulse.mn]\n    direction TB\n    U0(\"Бүртгүүлэх, нэвтрэх — нөхцөл, ёс зүй зөвшөөрөх\"):::uc\n    U1(\"Профайл, туршлага, портфолио, гол сэдэв\"):::uc\n    U2(\"Баталгаажуулалт хүсэх\"):::uc\n    U3(\"Контент байршуулах, медиа хавсаргах\"):::uc\n    U4(\"Урьдчилан шалгах, хууль ёсны мэдэгдэл\"):::uc\n    U5(\"Шалгалтад илгээх — бүгдийг сонгож олноор\"):::uc\n    U6(\"Төлвийн түүх, редакторын тайлбар харах\"):::uc\n    U7(\"Редакцад нэгдэх / гарах\"):::uc\n    U8(\"Топ мэдээ болгох хүсэлт\"):::uc\n    U9(\"Хандалт, борлуулалт (ДЕМО) харах\"):::uc\n    U10(\"Мэдэгдэл — бүгдийг сонгох\"):::uc\n  end\n  X0[\"AI: Gemini / дүрэм\"]:::ext\n  A0 --- U0\n  A0 --- U1\n  A0 --- U2\n  A0 --- U3\n  U3 -.-> X0\n  A0 --- U4\n  U4 -.-> X0\n  A0 --- U5\n  A0 --- U6\n  A0 --- U7\n  A0 --- U8\n  A0 --- U9\n  A0 --- U10"
+ },
+ {
+  "key": "uc_newsroom",
+  "title": "Use case — Редакц ба редакторууд",
+  "png": "C:\\Users\\Asus\\Desktop\\Busuk-Brain\\pulse-mn\\docs\\_build\\uml\\uc_newsroom.png",
+  "size": [
+   1609,
+   1620
+  ],
+  "mermaid": "flowchart LR\n  classDef actor fill:#fff,stroke:#0c2430,stroke-width:2px,color:#0c2430,font-weight:bold\n  classDef uc fill:#e2f0f2,stroke:#0f6f7c,color:#0c2430\n  classDef ext fill:#eeebfa,stroke:#5b4bb7,color:#0c2430\n  A0([\"Редакц\"]):::actor\n  A1([\"Редакцын редактор\"]):::actor\n  A2([\"Pulse.mn редактор\"]):::actor\n  subgraph S[Pulse.mn]\n    direction TB\n    U0(\"Хуулийн этгээдээр бүртгүүлэх\"):::uc\n    U1(\"Сэтгүүлчийн гишүүнчлэл батлах\"):::uc\n    U2(\"Редакцын редактор нэмэх / идэвхгүй болгох\"):::uc\n    U3(\"Контент шалгаж шийдвэр гаргах\"):::uc\n    U4(\"Залруулга, хариу тайлбар нийтлэх\"):::uc\n    U5(\"Топ мэдээ тавих — хугацаатай\"):::uc\n    U6(\"Мэдээ лицензлэх — худалдан авах\"):::uc\n    U7(\"Сэтгүүлчид үнэлгээ өгөх\"):::uc\n    U8(\"Амлалтын төлөв — нотолгоотой\"):::uc\n  end\n  X0[\"AI: Gemini / дүрэм\"]:::ext\n  X1[\"Төлбөр — ДЕМО\"]:::ext\n  A0 --- U0\n  A0 --- U1\n  A0 --- U2\n  A0 --- U3\n  A1 --- U3\n  A2 --- U3\n  U3 -.-> X0\n  A1 --- U4\n  A2 --- U4\n  A0 --- U5\n  A1 --- U5\n  A2 --- U5\n  A0 --- U6\n  U6 -.-> X1\n  A0 --- U7\n  U7 -.-> X0\n  A2 --- U8"
+ },
+ {
+  "key": "uc_citizen",
+  "title": "Use case — Иргэн",
+  "png": "C:\\Users\\Asus\\Desktop\\Busuk-Brain\\pulse-mn\\docs\\_build\\uml\\uc_citizen.png",
+  "size": [
+   1357,
+   1790
+  ],
+  "mermaid": "flowchart LR\n  classDef actor fill:#fff,stroke:#0c2430,stroke-width:2px,color:#0c2430,font-weight:bold\n  classDef uc fill:#e2f0f2,stroke:#0f6f7c,color:#0c2430\n  classDef ext fill:#eeebfa,stroke:#5b4bb7,color:#0c2430\n  A0([\"Иргэн\"]):::actor\n  subgraph S[Pulse.mn]\n    direction TB\n    U0(\"Мэдээ хайх, ангилал, Шуурхай\"):::uc\n    U1(\"Pulse Trust карт, залруулга харах\"):::uc\n    U2(\"Сэтгэгдэл — нэрээ нууцлах\"):::uc\n    U3(\"Статистикийн самбар, аймаг харьцуулах\"):::uc\n    U4(\"Амлалт: тойрог, 3D газрын зураг, хугацаа\"):::uc\n    U5(\"Амлалтын явцын зураг оруулах\"):::uc\n    U6(\"Дэлхийн мэдээ үзэх\"):::uc\n    U7(\"Гомдол гаргах\"):::uc\n    U8(\"Үнэлгээ өгөх\"):::uc\n    U9(\"Хувийн мэдээлэл татах / бүртгэл устгах\"):::uc\n  end\n  X0[\"AI: Gemini / дүрэм\"]:::ext\n  X1[\"parliament.mn\"]:::ext\n  X2[\"RSS эх сурвалж\"]:::ext\n  A0 --- U0\n  A0 --- U1\n  A0 --- U2\n  A0 --- U3\n  A0 --- U4\n  U4 -.-> X1\n  A0 --- U5\n  U5 -.-> X0\n  A0 --- U6\n  U6 -.-> X2\n  A0 --- U7\n  A0 --- U8\n  A0 --- U9"
+ },
+ {
+  "key": "uc_admin",
+  "title": "Use case — Админ",
+  "png": "C:\\Users\\Asus\\Desktop\\Busuk-Brain\\pulse-mn\\docs\\_build\\uml\\uc_admin.png",
+  "size": [
+   1652,
+   1620
+  ],
+  "mermaid": "flowchart LR\n  classDef actor fill:#fff,stroke:#0c2430,stroke-width:2px,color:#0c2430,font-weight:bold\n  classDef uc fill:#e2f0f2,stroke:#0f6f7c,color:#0c2430\n  classDef ext fill:#eeebfa,stroke:#5b4bb7,color:#0c2430\n  A0([\"Админ\"]):::actor\n  subgraph S[Pulse.mn]\n    direction TB\n    U0(\"Хэрэглэгч, эрх, баталгаажуулалт\"):::uc\n    U1(\"Контент хянах, нуух — хууль зүйн үндэслэл\"):::uc\n    U2(\"Гомдол шийдвэрлэх\"):::uc\n    U3(\"Төлбөр хянах, буцаах\"):::uc\n    U4(\"Амлалт: хугацаа, явц, байршил, урьдчилан баталгаажсан зураг\"):::uc\n    U5(\"Иргэний явцын мэдээ шалгах\"):::uc\n    U6(\"УИХ-ын гишүүд импортлох\"):::uc\n    U7(\"Статистик: эх сурвалж, үзүүлэлт, түүх сэргээх\"):::uc\n    U8(\"Нөөцлөлт, аудит лог\"):::uc\n  end\n  X0[\"Төлбөр — ДЕМО\"]:::ext\n  X1[\"parliament.mn\"]:::ext\n  A0 --- U0\n  A0 --- U1\n  A0 --- U2\n  A0 --- U3\n  U3 -.-> X0\n  A0 --- U4\n  A0 --- U5\n  A0 --- U6\n  U6 -.-> X1\n  A0 --- U7\n  A0 --- U8"
+ },
+ {
+  "key": "act_review",
+  "title": "Activity — Шалгалтад илгээх ба чиглүүлэлт",
+  "png": "C:\\Users\\Asus\\Desktop\\Busuk-Brain\\pulse-mn\\docs\\_build\\uml\\act_review.png",
+  "size": [
+   2513,
+   3103
+  ],
+  "mermaid": "flowchart TD\n  s((●)) --> a1[Сэтгүүлч «Шалгалтад илгээх»]\n  a1 --> d1{Баталгаажсан<br/>сэтгүүлч үү?}\n  d1 -- үгүй --> f1([Татгалзана: баталгаажуулалт хүсэх])\n  d1 -- тийм --> d2{Мэдэгдэл, талбар<br/>бүрэн үү?}\n  d2 -- үгүй --> f2([400: алдааны жагсаалт])\n  d2 -- тийм --> a2[AI урьдчилсан шалгалт:<br/>давхардал, зураг, тоо, хувийн мэдээлэл]\n  a2 --> a3[Хувилбар хадгалах v1, v2 …]\n  a3 --> d3{Редакцын гишүүн,<br/>редакцаа сонгосон уу?}\n  d3 -- тийм --> r1[review_by = редакц → редакц, редакторуудад мэдэгдэл]\n  d3 -- үгүй --> r2[review_by = Pulse.mn → Pulse.mn редакторт мэдэгдэл]\n  r1 --> e1[Редактор шалгах жагсаалт бөглөнө, AI гүнзгий шалгалт]\n  r2 --> e1\n  e1 --> d4{Шийдвэр}\n  d4 -- Зөвшөөрөх --> p1([Нийтлэгдсэн — Pulse Trust карт])\n  d4 -- Засварт буцаах --> p2[Засвар шаардлагатай + тайлбар] --> a1\n  d4 -- Татгалзах --> p3([Татгалзсан + шалтгаан])"
+ },
+ {
+  "key": "act_license",
+  "title": "Activity — Мэдээ лицензлэх (ДЕМО төлбөр)",
+  "png": "C:\\Users\\Asus\\Desktop\\Busuk-Brain\\pulse-mn\\docs\\_build\\uml\\act_license.png",
+  "size": [
+   1473,
+   2459
+  ],
+  "mermaid": "flowchart TD\n  s((●)) --> a1[Редакц нийтлэгдсэн мэдээн дээр лиценз сонгоно: энгийн ×1 / онцгой ×3]\n  a1 --> a2[Үнийн задаргаа: НӨАТ 10/110, Pulse.mn шимтгэл 10%, сэтгүүлчийн цэвэр дүн]\n  a2 --> d1{Нөхцөл зөвшөөрсөн,<br/>эрх чөлөөтэй юу?}\n  d1 -- үгүй --> f1([Татгалзана])\n  d1 -- тийм --> a3[Нэхэмжлэх PMN-XXXX — provider: demo]\n  a3 --> d2{Төлбөр<br/>баталгаажсан уу?}\n  d2 -- цуцалсан --> f2([Цуцлагдсан])\n  d2 -- тийм --> a4[Төлөгдсөн; И-баримт ДЕМО; сэтгүүлчид мэдэгдэл]\n  a4 --> d3{Маргаан<br/>гарсан уу?}\n  d3 -- тийм --> a5([Админ шалтгаантай буцаана])\n  d3 -- үгүй --> f3([Төгсгөл])"
+ },
+ {
+  "key": "act_world",
+  "title": "Activity — Дэлхийн мэдээний AI шүүлт",
+  "png": "C:\\Users\\Asus\\Desktop\\Busuk-Brain\\pulse-mn\\docs\\_build\\uml\\act_world.png",
+  "size": [
+   1755,
+   1789
+  ],
+  "mermaid": "flowchart TD\n  s((●)) --> a1[Vercel Cron өдөр бүр / кэш 3 цагаас хуучирсан]\n  a1 --> a2[RSS эх сурвалж бүрийг зэрэг татна — нэг нь унахад бусад нь үргэлжилнэ]\n  a2 --> a3[Давхардал хасах, хэл таних]\n  a3 --> d1{Gemini<br/>тохируулсан уу?}\n  d1 -- тийм --> g[Gemini: Монголтой холбоо, ангилал, Монгол гарчиг, хураангуй]\n  d1 -- үгүй --> r[Дүрэм: түлхүүр үг, Өвөр Монголыг хасах, ангилал]\n  g --> a4[Холбоо ≥ 0.5-ийг хадгална]\n  r --> a4\n  a4 --> a5[robots.txt зөвшөөрвөл og:image зураг]\n  a5 --> f([Төгсгөл])"
+ },
+ {
+  "key": "act_pledge",
+  "title": "Activity — Иргэний амлалтын явцын мэдээ",
+  "png": "C:\\Users\\Asus\\Desktop\\Busuk-Brain\\pulse-mn\\docs\\_build\\uml\\act_pledge.png",
+  "size": [
+   1507,
+   1896
+  ],
+  "mermaid": "flowchart TD\n  s((●)) --> a1[Нэвтэрсэн иргэн амлалт сонгоно]\n  a1 --> a2[Тайлбар, зураг jpg/png/webp ≤10MB, байршил, явцын үнэлгээ]\n  a2 --> a3[sha256 + dHash тооцоолох]\n  a3 --> a4[AI урьдчилсан шалгалт:<br/>давхар зураг, байршлаас >5 км,<br/>богино тайлбар → оноо 0–100]\n  a4 --> a5[Шалгаж буй төлөвтэй хадгална — нийтэд харагдахгүй]\n  a5 --> d1{Админ / редактор<br/>шийдвэр}\n  d1 -- Баталгаажуулах --> b1[Амлалтын явц % шинэчлэх; нотлох баримт PledgeEvidence үүсгэх]\n  b1 --> b2([Нийтэд харагдана; иргэнд мэдэгдэл])\n  d1 -- Татгалзах --> c1([Татгалзсан; иргэнд мэдэгдэл])"
+ },
+ {
+  "key": "state_content",
+  "title": "State — Контентын төлөв",
+  "png": "C:\\Users\\Asus\\Desktop\\Busuk-Brain\\pulse-mn\\docs\\_build\\uml\\state_content.png",
+  "size": [
+   1160,
+   918
+  ],
+  "mermaid": "stateDiagram-v2\n  [*] --> draft: Үүсгэх\n  draft --> under_review: Шалгалтад илгээх\n  changes_requested --> under_review: Засаад дахин илгээх\n  under_review --> published: Зөвшөөрөх\n  under_review --> changes_requested: Засварт буцаах\n  under_review --> rejected: Татгалзах\n  published --> hidden: Нуух (хууль зүйн үндэслэл)\n  hidden --> published: Сэргээх\n  rejected --> [*]\n  draft: Ноорог\n  under_review: Хянагдаж буй\n  changes_requested: Засвар шаардлагатай\n  published: Нийтлэгдсэн\n  rejected: Татгалзсан\n  hidden: Түр нуусан"
+ },
+ {
+  "key": "seq_submit",
+  "title": "Sequence — Контент байршуулж шалгуулах",
+  "png": "C:\\Users\\Asus\\Desktop\\Busuk-Brain\\pulse-mn\\docs\\_build\\uml\\seq_submit.png",
+  "size": [
+   2925,
+   1890
+  ],
+  "mermaid": "sequenceDiagram\n  autonumber\n  actor J as Сэтгүүлч\n  participant W as Platform (Next.js)\n  participant API as API (Django)\n  participant AI as AI шалгалт\n  participant DB as Neon Postgres\n  actor E as Редактор\n  J->>W: Маягт бөглөж, медиа хавсаргана\n  W->>API: POST /content/ (JWT)\n  API->>DB: Content(draft)\n  W->>API: POST /content/{id}/media/\n  API->>API: төрөл, хэмжээ, sha256, dHash\n  J->>W: «Шалгалтад илгээх»\n  W->>API: POST /content/{id}/submit/\n  API->>AI: run_checks (давхардал, тоо, хувийн мэдээлэл)\n  AI-->>API: verification + trust оноо\n  API->>DB: under_review, review_by, ContentVersion\n  API-->>E: Мэдэгдэл\n  E->>W: Шалгах жагсаалт, шийдвэр\n  W->>API: POST /review/{id}/decide/\n  API->>DB: published / changes_requested / rejected + AuditLog\n  API-->>J: Мэдэгдэл (шалтгаантай)"
+ },
+ {
+  "key": "seq_purchase",
+  "title": "Sequence — Мэдээ худалдан авах (ДЕМО)",
+  "png": "C:\\Users\\Asus\\Desktop\\Busuk-Brain\\pulse-mn\\docs\\_build\\uml\\seq_purchase.png",
+  "size": [
+   2237,
+   1398
+  ],
+  "mermaid": "sequenceDiagram\n  autonumber\n  actor N as Редакц\n  participant W as Platform\n  participant API as API\n  participant P as PaymentProvider (demo)\n  actor J as Сэтгүүлч\n  N->>W: Лиценз сонгох\n  W->>API: GET /purchases/quote/\n  API-->>W: НӨАТ, шимтгэл, сэтгүүлчийн дүн\n  N->>W: Нөхцөл зөвшөөрөх\n  W->>API: POST /purchases/\n  API->>P: create_invoice\n  P-->>API: provider_ref\n  N->>W: «Төлбөр төлсөн»\n  W->>API: POST /purchases/{id}/confirm/\n  API->>P: issue_receipt (И-баримт ДЕМО)\n  API-->>J: «Таны мэдээг худалдан авлаа · цэвэр дүн»"
+ },
+ {
+  "key": "seq_pledge",
+  "title": "Sequence — Амлалтын явц баталгаажуулах",
+  "png": "C:\\Users\\Asus\\Desktop\\Busuk-Brain\\pulse-mn\\docs\\_build\\uml\\seq_pledge.png",
+  "size": [
+   2177,
+   1302
+  ],
+  "mermaid": "sequenceDiagram\n  autonumber\n  actor C as Иргэн\n  participant W as Platform\n  participant API as API\n  participant B as Vercel Blob\n  actor A as Админ\n  C->>W: Зураг, байршил, тайлбар\n  W->>API: POST /pledges/{id}/updates/ (multipart)\n  API->>API: check_update: давхардал, зай, тайлбар\n  API->>B: зураг хадгалах\n  API-->>W: AI оноо, анхааруулга\n  A->>W: Шалгах дараалал\n  W->>API: POST /admin/pledge-updates/{id}/review/\n  API->>API: progress шинэчлэх, PledgeEvidence\n  API-->>C: Мэдэгдэл"
+ },
+ {
+  "key": "deploy",
+  "title": "Deployment — Байршуулалт",
+  "png": "C:\\Users\\Asus\\Desktop\\Busuk-Brain\\pulse-mn\\docs\\_build\\uml\\deploy.png",
+  "size": [
+   2413,
+   955
+  ],
+  "mermaid": "flowchart LR\n  classDef n fill:#fff,stroke:#0c2430,stroke-width:1.5px,color:#0c2430\n  classDef ext fill:#eeebfa,stroke:#5b4bb7,color:#0c2430\n  U[Хэрэглэгчийн хөтөч / гар утас]:::n\n  P[Vercel · pulse-mn-platform<br/>Next.js 14]:::n\n  AD[Vercel · pulse-mn-admin<br/>Next.js 14]:::n\n  API[Vercel · pulse-mn-api<br/>Django 5 + DRF, sin1]:::n\n  DB[(Neon Postgres)]:::n\n  BL[(Vercel Blob — медиа)]:::n\n  CR[Vercel Cron — өдөр бүр]:::n\n  G[Gemini API — сонголттой]:::ext\n  R[RSS эх сурвалжууд]:::ext\n  PM[parliament.mn API]:::ext\n  OSM[OpenFreeMap / OSM 3D tiles]:::ext\n  GH[GitHub · BuzukLuka/pulse-mn]:::ext\n  U -- HTTPS --> P\n  U -- HTTPS --> AD\n  U -- vector tiles --> OSM\n  P -- REST /api/v1 JWT --> API\n  AD -- REST /api/v1 JWT --> API\n  API -- SQL --> DB\n  API -- PUT --> BL\n  CR -- /world-news/refresh --> API\n  API -.-> G\n  API -.-> R\n  API -.-> PM\n  GH -- push → deploy --> P & AD & API"
+ },
+ {
+  "key": "cls_content",
+  "title": "Class — Хэрэглэгч, контент",
+  "png": "C:\\Users\\Asus\\Desktop\\Busuk-Brain\\pulse-mn\\docs\\_build\\uml\\cls_content.png",
+  "size": [
+   2558,
+   2923
+  ],
+  "mermaid": "classDiagram\n  direction LR\n  class User {\n    +str email\n    +str full_name\n    +str phone\n    +str organization\n    +text bio\n    +str role\n    +bool is_verified\n    +datetime verification_requested_at\n    +datetime terms_accepted_at\n    +datetime privacy_consent_at\n    +datetime ethics_accepted_at\n    +… 10 талбар\n  }\n  class Experience {\n    +str organization\n    +str position\n    +str period\n  }\n  class PortfolioItem {\n    +str title\n    +str kind\n    +int year\n    +str url\n  }\n  class Content {\n    +str content_type\n    +time event_time\n    +str location_detail\n    +str license\n    +bool copyright_declared\n    +json verification\n    +json embedding\n    +json review_checklist\n    +int price\n    +json compliance\n    +str review_by\n    +… 18 талбар\n  }\n  class Media {\n    +file file\n    +str kind\n    +str original_name\n    +PositiveBigIntegerField size\n    +str sha256\n    +str phash\n    +datetime created_at\n  }\n  class ContentVersion {\n    +int number\n    +str title\n    +text body\n    +str source\n    +json tags\n    +datetime created_at\n  }\n  class Correction {\n    +str kind\n    +text text\n    +datetime created_at\n  }\n  class Comment {\n    +text text\n    +bool is_anonymous\n    +bool is_hidden\n    +datetime created_at\n  }\n  class Category {\n    +slug slug\n    +str name\n  }\n  class Province {\n    +str name\n  }\n  class District {\n    +str name\n  }\n  class Notification {\n    +str title\n    +text body\n    +int content_id\n    +bool is_read\n    +datetime created_at\n  }\n  class AuditLog {\n    +str action\n    +str entity_type\n    +str entity_id\n    +json before\n    +json after\n    +text reason\n    +datetime created_at\n  }\n  User \"0..*\" --> \"1\" Province : province\n  User \"0..*\" --> \"1\" District : district\n  User \"0..*\" --> \"1\" User : newsroom_org\n  Experience \"0..*\" --> \"1\" User : user\n  PortfolioItem \"0..*\" --> \"1\" User : user\n  Content \"0..*\" --> \"1\" User : author\n  Content \"0..*\" --> \"1\" User : newsroom\n  Content \"0..*\" --> \"1\" User : featured_by\n  Content \"0..*\" --> \"1\" Category : category\n  Content \"0..*\" --> \"1\" Province : province\n  Content \"0..*\" --> \"1\" District : district\n  Content \"0..*\" --> \"1\" User : reviewed_by\n  Media \"0..*\" --> \"1\" Content : content\n  ContentVersion \"0..*\" --> \"1\" Content : content\n  Correction \"0..*\" --> \"1\" Content : content\n  Correction \"0..*\" --> \"1\" User : created_by\n  Comment \"0..*\" --> \"1\" Content : content\n  Comment \"0..*\" --> \"1\" User : author\n  District \"0..*\" --> \"1\" Province : province\n  Notification \"0..*\" --> \"1\" User : user\n  AuditLog \"0..*\" --> \"1\" User : actor"
+ },
+ {
+  "key": "cls_market",
+  "title": "Class — Редакц, худалдаа, гомдол, дэлхийн мэдээ",
+  "png": "C:\\Users\\Asus\\Desktop\\Busuk-Brain\\pulse-mn\\docs\\_build\\uml\\cls_market.png",
+  "size": [
+   1812,
+   3099
+  ],
+  "mermaid": "classDiagram\n  direction LR\n  class User {\n    +str email\n    +str full_name\n    +str phone\n    +str organization\n    +text bio\n    +str role\n    +bool is_verified\n    +datetime verification_requested_at\n    +datetime terms_accepted_at\n    +datetime privacy_consent_at\n    +datetime ethics_accepted_at\n    +… 10 талбар\n  }\n  class Content {\n    +str content_type\n    +time event_time\n    +str location_detail\n    +str license\n    +bool copyright_declared\n    +json verification\n    +json embedding\n    +json review_checklist\n    +int price\n    +json compliance\n    +str review_by\n    +… 18 талбар\n  }\n  class Membership {\n    +str status\n    +str message\n    +datetime created_at\n    +datetime decided_at\n  }\n  class Purchase {\n    +str license_type\n    +int amount\n    +int vat_amount\n    +int platform_fee\n    +int author_net\n    +str provider\n    +str provider_ref\n    +str ebarimt_no\n    +datetime terms_accepted_at\n    +str refund_reason\n    +str invoice_code\n    +… 3 талбар\n  }\n  class Rating {\n    +int score\n    +str comment\n    +datetime created_at\n    +datetime updated_at\n  }\n  class Complaint {\n    +str target_type\n    +int target_id\n    +str kind\n    +text text\n    +str evidence_url\n    +str status\n    +text resolution\n    +datetime resolved_at\n    +datetime created_at\n  }\n  class ExternalArticle {\n    +str source\n    +str url\n    +str title\n    +str title_mn\n    +text snippet\n    +str image_url\n    +bool image_checked\n    +text summary_mn\n    +str language\n    +datetime published_at\n    +float relevance\n    +… 2 талбар\n  }\n  class FetchRun {\n    +datetime started_at\n    +datetime finished_at\n    +int added\n    +json report\n  }\n  class Category {\n    +slug slug\n    +str name\n  }\n  User \"0..*\" --> \"1\" User : newsroom_org\n  Content \"0..*\" --> \"1\" User : author\n  Content \"0..*\" --> \"1\" User : newsroom\n  Content \"0..*\" --> \"1\" User : featured_by\n  Content \"0..*\" --> \"1\" Category : category\n  Content \"0..*\" --> \"1\" User : reviewed_by\n  Membership \"0..*\" --> \"1\" User : newsroom\n  Membership \"0..*\" --> \"1\" User : journalist\n  Purchase \"0..*\" --> \"1\" Content : content\n  Purchase \"0..*\" --> \"1\" User : buyer\n  Rating \"0..*\" --> \"1\" User : rater\n  Rating \"0..*\" --> \"1\" User : target\n  Rating \"0..*\" --> \"1\" Content : content\n  Complaint \"0..*\" --> \"1\" User : reporter\n  Complaint \"0..*\" --> \"1\" User : resolved_by\n  ExternalArticle \"0..*\" --> \"1\" Category : category"
+ },
+ {
+  "key": "cls_civic",
+  "title": "Class — Амлалт, статистик",
+  "png": "C:\\Users\\Asus\\Desktop\\Busuk-Brain\\pulse-mn\\docs\\_build\\uml\\cls_civic.png",
+  "size": [
+   3301,
+   2847
+  ],
+  "mermaid": "classDiagram\n  direction LR\n  class Politician {\n    +str name\n    +str position\n    +str party\n    +int term_year\n    +int parliament_id\n    +str photo_url\n    +str profile_url\n    +int constituency_number\n    +str constituency_name\n    +str election_system\n    +int votes\n  }\n  class Pledge {\n    +text text\n    +str source\n    +str source_url\n    +str status\n    +date deadline\n    +int progress\n    +float lat\n    +float lng\n    +str location_name\n    +datetime created_at\n    +datetime updated_at\n  }\n  class PledgeEvidence {\n    +str kind\n    +str source\n    +date date\n    +str url\n    +text note\n    +datetime created_at\n  }\n  class PledgeStatusHistory {\n    +str old_status\n    +str new_status\n    +text reason\n    +datetime created_at\n  }\n  class PledgeUpdate {\n    +text text\n    +file photo\n    +str photo_sha256\n    +str photo_phash\n    +float lat\n    +float lng\n    +int progress_claim\n    +str status\n    +json ai_check\n    +str review_note\n    +datetime reviewed_at\n    +… 1 талбар\n  }\n  class Category {\n    +slug slug\n    +str name\n  }\n  class Province {\n    +str name\n  }\n  class District {\n    +str name\n  }\n  class DataSource {\n    +str name\n    +str kind\n    +str url\n    +str frequency\n    +datetime last_synced_at\n    +str status\n    +text last_error\n    +datetime created_at\n  }\n  class Indicator {\n    +str name\n    +str aliases\n    +str unit\n    +bool is_active\n  }\n  class IndicatorValue {\n    +int year\n    +decimal value\n    +datetime updated_at\n  }\n  class IndicatorValueHistory {\n    +decimal old_value\n    +decimal new_value\n    +text reason\n    +datetime created_at\n  }\n  class User {\n    +str email\n    +str full_name\n    +str phone\n    +str organization\n    +text bio\n    +str role\n    +bool is_verified\n    +datetime verification_requested_at\n    +datetime terms_accepted_at\n    +datetime privacy_consent_at\n    +datetime ethics_accepted_at\n    +… 10 талбар\n  }\n  Politician \"0..*\" --> \"1\" Province : province\n  Politician \"0..*\" --> \"1\" District : district\n  Pledge \"0..*\" --> \"1\" Politician : politician\n  Pledge \"0..*\" --> \"1\" Category : category\n  Pledge \"0..*\" --> \"1\" User : created_by\n  PledgeEvidence \"0..*\" --> \"1\" Pledge : pledge\n  PledgeEvidence \"0..*\" --> \"1\" User : added_by\n  PledgeStatusHistory \"0..*\" --> \"1\" Pledge : pledge\n  PledgeStatusHistory \"0..*\" --> \"1\" PledgeEvidence : evidence\n  PledgeStatusHistory \"0..*\" --> \"1\" User : changed_by\n  PledgeUpdate \"0..*\" --> \"1\" Pledge : pledge\n  PledgeUpdate \"0..*\" --> \"1\" User : author\n  PledgeUpdate \"0..*\" --> \"1\" User : reviewed_by\n  District \"0..*\" --> \"1\" Province : province\n  Indicator \"0..*\" --> \"1\" Category : category\n  Indicator \"0..*\" --> \"1\" DataSource : source\n  IndicatorValue \"0..*\" --> \"1\" Indicator : indicator\n  IndicatorValue \"0..*\" --> \"1\" Province : province\n  IndicatorValue \"0..*\" --> \"1\" District : district\n  IndicatorValueHistory \"0..*\" --> \"1\" IndicatorValue : value_ref\n  IndicatorValueHistory \"0..*\" --> \"1\" User : changed_by\n  User \"0..*\" --> \"1\" Province : province\n  User \"0..*\" --> \"1\" District : district\n  User \"0..*\" --> \"1\" User : newsroom_org"
+ }
+]
